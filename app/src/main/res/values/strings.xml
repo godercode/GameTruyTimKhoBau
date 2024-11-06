@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">GameTruyTimKhoBau</string>
+    <string name="action_user">User</string>
+    <string name="action_leaderboard">LeaderBoard</string>
+    <string name="action_location">Location</string>
+    <string name="action_progress">Progress</string>
+    <string name="action_more">More</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_user_fragment">Hello User fragment</string>
+    <string name="hello_leaderboard_fragment">Hello Leader Board fragment</string>
+    <string name="hello_location_fragment">Hello Location fragment</string>
+    <string name="hello_progress_fragment">Hello Progress fragment</string>
+    <string name="hello_more_fragment">Hello More fragment</string>
+</resources>

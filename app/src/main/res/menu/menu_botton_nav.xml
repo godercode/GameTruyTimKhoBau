@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_user"
+        android:title="@string/action_user"
+        android:icon="@drawable/ic_user"/>
+
+    <item android:id="@+id/action_leaderboard"
+        android:title="@string/action_leaderboard"
+        android:icon="@drawable/ic_leaderboard"/>
+
+    <item android:id="@+id/action_location"
+        android:title="@string/action_location"
+        android:icon="@drawable/ic_location"/>
+
+    <item android:id="@+id/action_progress"
+        android:title="@string/action_progress"
+        android:icon="@drawable/ic_progress"/>
+    <item android:id="@+id/action_more"
+        android:title="@string/action_more"
+        android:icon="@drawable/ic_more"/>
+</menu>
