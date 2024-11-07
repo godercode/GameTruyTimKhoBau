@@ -14,4 +14,5 @@ public class LeaderBoardFragment extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_leader_board, container, false);
     }
+    // mình phải commit nó mới cho chuyển chuyển sang không có Signup mình tạo thấy ko giờ pull về
 }
