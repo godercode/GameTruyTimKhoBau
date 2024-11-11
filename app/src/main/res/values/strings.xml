@@ -1,10 +1,18 @@
 <resources>
-    <string name="app_name">GameTruyTimKhoBau</string>
+    <string name="app_name">Treasure finding</string>
     <string name="action_user">User</string>
     <string name="action_leaderboard">LeaderBoard</string>
     <string name="action_location">Location</string>
     <string name="action_progress">Progress</string>
     <string name="action_more">More</string>
+    <string name="app_slogan">The game to have fun outside</string>
+    <string name="app_login">Log in</string>
+    <string name="app_signup">Sign up</string>
+    <string name="app_logout">Log out</string>
+    <string name="app_profile">Profile</string>
+    <string name="app_reset_pass">Reset password</string>
+    <string name="app_username">User name</string>
+    <string name="app_verify">Email not verified!</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_user_fragment">Hello User fragment</string>
     <string name="hello_leaderboard_fragment">Hello Leader Board fragment</string>
