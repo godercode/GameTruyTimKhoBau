@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "576847756973",
+    "project_id": "gametruytimkhobau",
+    "storage_bucket": "gametruytimkhobau.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576847756973:android:bff3d3196b6453bff2d024",
+        "android_client_info": {
+          "package_name": "com.example.gametruytimkhobau"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1Jwewr0ujW9hV_oOK2-Ce0YuUzJz3GZ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
