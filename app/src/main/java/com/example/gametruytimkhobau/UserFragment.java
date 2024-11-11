@@ -46,13 +46,14 @@ public class UserFragment extends Fragment {
         setListeners();
         return view;
     }
-
+    //Hàm khởi tạo biến
     private void initViews(View view) {
         mAuth = FirebaseAuth.getInstance();
         mStore = FirebaseFirestore.getInstance();
         mUser = mAuth.getCurrentUser();
-
+        //kiểm tra đăng nhập rồi mới được vào đây
         if (mUser != null) {
+            //Lấy ra id của người dùng này
             userID = mUser.getUid();
 
             btnLogout = view.findViewById(R.id.btn_logout);
@@ -61,7 +62,7 @@ public class UserFragment extends Fragment {
             btnResetPass = view.findViewById(R.id.btn_reset_password);
             tvVerify = view.findViewById(R.id.tv_verify);
             btnVerify = view.findViewById(R.id.btn_verify);
-
+            //Kiểm tra xem verify chưa thì yêu cầu
             if (!mUser.isEmailVerified()) {
                 tvVerify.setVisibility(View.VISIBLE);
                 btnVerify.setVisibility(View.VISIBLE);
@@ -71,9 +72,10 @@ public class UserFragment extends Fragment {
             signOutAndRedirect();
         }
     }
-
+    //Tạo cái profile cho người dùng
     private void createProfile(){
         if (userID != null) {
+            //Láy dữ liệu từ firestore hiện ra thôi
             DocumentReference documentReference = mStore.collection("users").document(userID);
             documentReference.addSnapshotListener((value, error) -> {
                 if (error != null) {
@@ -81,18 +83,19 @@ public class UserFragment extends Fragment {
                     return;
                 }
                 if (value != null && value.exists() && getActivity() != null && isAdded()) {
+                    //Đây lấy username từ firestore hiện ra
                     tvUsername.setText(value.getString("userName"));
                 }
             });
         }
     }
-
+    //Xử lý click cho các nút
     private void setListeners() {
         btnLogout.setOnClickListener(v -> signOutAndRedirect());
         btnResetPass.setOnClickListener(v -> createResetPassDialog());
         btnVerify.setOnClickListener(v -> sendVerificationEmail());
     }
-
+    //Gửi mã xức thực vào email
     private void sendVerificationEmail() {
         if (mUser != null) {
             mUser.sendEmailVerification().addOnSuccessListener(unused -> {
@@ -103,23 +106,24 @@ public class UserFragment extends Fragment {
             });
         }
     }
-
+//Tạo cái dialog cho nhập pass mới
     private void createResetPassDialog() {
         EditText resetPassword = new EditText(getActivity());
         AlertDialog.Builder passwordResetDialog = new AlertDialog.Builder(getActivity());
         passwordResetDialog.setTitle("Reset Password?");
         passwordResetDialog.setMessage("Enter Your New Password");
         passwordResetDialog.setView(resetPassword);
-
+        //chọn yes thì nảy vào đây
         passwordResetDialog.setPositiveButton("Yes", (dialog, which) -> {
             String newPassword = resetPassword.getText().toString().trim();
+            //gọi hàm updatePassword viết bên dưới
             updatePassword(newPassword);
             dialog.dismiss();
         });
         passwordResetDialog.setNegativeButton("No", (dialog, which) -> dialog.dismiss());
         passwordResetDialog.create().show();
     }
-
+    //Hàm này đổi mật khẩu copy past
     private void updatePassword(String newPassword) {
         if (mUser != null) {
             mUser.updatePassword(newPassword).addOnSuccessListener(unused -> {
@@ -130,7 +134,7 @@ public class UserFragment extends Fragment {
             });
         }
     }
-
+    //Đăng xuất
     private void signOutAndRedirect() {
         mAuth.signOut();
         if (getActivity() != null) {

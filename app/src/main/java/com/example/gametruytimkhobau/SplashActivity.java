@@ -32,7 +32,7 @@ public class SplashActivity extends AppCompatActivity {
     private void nextActivity() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null){
-            //Chưa login
+            //Chưa login gọi intent chuyển đến activity đăng ký đăng nhập
             Intent intent = new Intent(this, SignupAndLoginActivity.class);
             startActivity(intent);
             finish();

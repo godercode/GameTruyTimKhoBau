@@ -17,10 +17,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //Khởi tạo location frangment khi mainActivity được gọi
+        replaceFragment(new LocationFragment());
 
-        replaceFragment(new LocationFragment());
         bottomNavigationView = findViewById(R.id.bottom_nav);
-        replaceFragment(new LocationFragment());
+        // Xử lý chuyển fragment khi click biểu tượng tương ứng trên bottom menu
         bottomNavigationView.setSelectedItemId(R.id.action_location);
         bottomNavigationView.setOnItemSelectedListener(menuItem -> {
             Fragment selectedFragment = null;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.replace(R.id.frl_main, fragment);
         fragmentTransaction.commit();
     }
-
+    //Code này của Nam ko biết mục đich chắc là bất tắt thông tin kho báu
     private void hideTreasureInfoFragment() {
         Fragment treasureInfoFragment = getSupportFragmentManager().findFragmentById(R.id.info_fragment_container);
         if (treasureInfoFragment != null) {

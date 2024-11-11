@@ -40,7 +40,7 @@ public class SignupActivity extends AppCompatActivity {
         initViews();
         setListeners();
     }
-
+    //Hàm này khởi tạo giá trị cho mấy biến
     private void initViews() {
         etEmail = findViewById(R.id.et_email);
         etUsername = findViewById(R.id.et_username);
@@ -51,7 +51,7 @@ public class SignupActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         fStore = FirebaseFirestore.getInstance();
     }
-
+    //Hàm này xử lý sự kiên click
     private void setListeners() {
         btnSignup.setOnClickListener(v -> {
             progressBar.setVisibility(View.VISIBLE);
@@ -67,29 +67,35 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
     }
-
+//Hàm xử lý đăng ký chính
     private void createUser(String email, String pass, String name) {
+        //tạo tài khoản với email và pass
         mAuth.createUserWithEmailAndPassword(email, pass)
                 .addOnCompleteListener(this, task -> {
+                    //cái progress này để hiện cái loading
                     progressBar.setVisibility(View.VISIBLE);
+                    //kiểm tra tạo thành công nhảy vào đây
                     if (task.isSuccessful()) {
-                        // send verification link
+                        //Gọi hàm xác thực bằng email
                         verificationEmail();
                         userID = mAuth.getCurrentUser().getUid();
+                        //Dùng firestore để lưu dữ liệu người dùng lên firebase
                         DocumentReference documentReference = fStore.collection("users").document(userID);
                         Map<String, Object> user = new HashMap<>();
                         user.put("userName", name);
                         user.put("email", email);
 
+                        //Lưu thành công nhảy vào đây
                         documentReference.set(user).addOnSuccessListener(unused -> {
                             Log.d("Signup", "onSuccess: user Profile is created for " + userID);
                             progressBar.setVisibility(View.GONE);
                         });
-
+                        //Xong là gọi intent chuyển sang cho log vào
                         Log.d("Signup", "createUserWithEmail: success");
                         Toast.makeText(SignupActivity.this, "Welcome " + email, Toast.LENGTH_LONG).show();
-                        startActivity(new Intent(SignupActivity.this, MainActivity.class));
+                        startActivity(new Intent(SignupActivity.this, LoginActivity.class));
                         finishAffinity();
+                    //Tạo thất bại nhảy vào đây
                     } else {
                         Log.d("Signup", "createUserWithEmail: failure", task.getException());
                         progressBar.setVisibility(View.GONE);
@@ -97,7 +103,7 @@ public class SignupActivity extends AppCompatActivity {
                 }
         });
     }
-
+    //Hàm này xử lý các thực bằng email mặc định copy past
     private void verificationEmail() {
         FirebaseUser user = mAuth.getCurrentUser();
         user.sendEmailVerification().addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -113,7 +119,7 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
     }
-
+    //Hàm này validate dữ liệu
     private boolean validating(String email, String password, String username, Boolean isAgreeChecked) {
         if (email.isEmpty()) {
             etEmail.setError("Please enter an email");

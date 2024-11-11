@@ -43,7 +43,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.fragment_location, container, false);
 
         // Khởi tạo FusedLocationProviderClient để lấy vị trí cua minfh
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
         // Khởi tạo mapơ
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
@@ -80,7 +80,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
                 String treasureTitle = closestMarker.getTitle();
                 treasureManager.collectTreasure(closestMarker); // Xóa kho báu khỏi hệ thống
                 closestMarker.remove(); // Xóa kho báu khỏi bản đồ
-                Toast.makeText(requireContext(), "Bạn đã tìm thấy " + treasureTitle, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Bạn đã tìm thấy " + treasureTitle, Toast.LENGTH_SHORT).show();
             } else {
                 // Nếu không có kho báu nào trong khoảng cách dưới 30 mét, hiển thị thông tin về kho báu gần nhất
                 if (closestMarker != null) {
@@ -107,11 +107,11 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
                         infoFragmentContainer.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    Toast.makeText(requireContext(), "Khoảng cách của bạn quá xa, hãy lại gần thêm ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Khoảng cách của bạn quá xa, hãy lại gần thêm ", Toast.LENGTH_SHORT).show();
                 }
             }
         } else {
-            Toast.makeText(requireContext(), "Chưa xác định được vị trí hiện tại!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Chưa xác định được vị trí hiện tại!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -162,7 +162,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
         map = googleMap;
 
         // Kiểm tra và yêu cầu quyền truy cập vị trí nếu chưa được cấp
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
 
@@ -231,9 +231,9 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
                 if (closestMarker != null && treasureManager.isWithinDistance(currentLocation, closestMarker, 50)) {
                     treasureManager.collectTreasure(closestMarker);
                     closestMarker.remove();
-                    Toast.makeText(requireContext(), "Chúc mừng, bạn đã tìm thấy kho báu " + title + " cách bạn " + Math.round(distance) + "m", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Chúc mừng, bạn đã tìm thấy kho báu " + title + " cách bạn " + Math.round(distance) + "m", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(requireContext(), "Không có kho báu nào ở cách bạn 50m!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Không có kho báu nào ở cách bạn 50m!", Toast.LENGTH_SHORT).show();
                 }
             }
             hideTreasureInfo();
@@ -265,13 +265,13 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+            if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 map.setMyLocationEnabled(true);
                 startLocationUpdates();
             }
         } else {
-            Toast.makeText(requireContext(), "Lỗi truy cập", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Lỗi truy cập", Toast.LENGTH_SHORT).show();
         }
     }
 }

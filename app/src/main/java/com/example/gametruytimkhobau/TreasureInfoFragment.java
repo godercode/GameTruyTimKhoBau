@@ -67,17 +67,15 @@ public class TreasureInfoFragment extends Fragment {
 
         findTreasureButton.setOnClickListener(v -> {
             if (distance <= 50) {
-                Toast.makeText(requireContext(), "Chúc mừng, bạn đã tìm thấy kho báu " + title, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Chúc mừng, bạn đã tìm thấy kho báu " + title, Toast.LENGTH_SHORT).show();
                 if (treasureFoundListener != null) {
                     treasureFoundListener.onTreasureFound();
                 }
                 getParentFragmentManager().beginTransaction().remove(TreasureInfoFragment.this).commit();
             } else {
-                    Toast.makeText(requireContext(), "Khoảng cách của bạn quá xa, hãy lại gần thêm "+ Math.round(distance -50) + " m", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Khoảng cách của bạn quá xa, hãy lại gần thêm "+ Math.round(distance -50) + " m", Toast.LENGTH_SHORT).show();
                 }
         });
-
-
         return view;
     }
 
