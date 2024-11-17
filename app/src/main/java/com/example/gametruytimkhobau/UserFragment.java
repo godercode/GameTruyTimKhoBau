@@ -22,6 +22,11 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -30,7 +35,8 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 
 public class UserFragment extends Fragment {
     private FirebaseAuth mAuth;
-    private FirebaseFirestore mStore;
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mReference;
     private FirebaseUser mUser;
     private String userID;
     private Button btnLogout, btnResetPass, btnVerify;
@@ -49,7 +55,7 @@ public class UserFragment extends Fragment {
     //Hàm khởi tạo biến
     private void initViews(View view) {
         mAuth = FirebaseAuth.getInstance();
-        mStore = FirebaseFirestore.getInstance();
+        mDatabase = FirebaseDatabase.getInstance();
         mUser = mAuth.getCurrentUser();
         //kiểm tra đăng nhập rồi mới được vào đây
         if (mUser != null) {
@@ -75,20 +81,33 @@ public class UserFragment extends Fragment {
     //Tạo cái profile cho người dùng
     private void createProfile(){
         if (userID != null) {
-            //Láy dữ liệu từ firestore hiện ra thôi
-            DocumentReference documentReference = mStore.collection("users").document(userID);
-            documentReference.addSnapshotListener((value, error) -> {
-                if (error != null) {
-                    Log.w("UserFragment", "Listen failed.", error);
-                    return;
-                }
-                if (value != null && value.exists() && getActivity() != null && isAdded()) {
-                    //Đây lấy username từ firestore hiện ra
-                    tvUsername.setText(value.getString("userName"));
-                }
-            });
+            getUserDataFromFirebase(userID);
         }
     }
+
+    private void getUserDataFromFirebase(String userID) {
+        mReference = mDatabase.getReference("users").child(userID); // Trỏ tới nút của user cụ thể
+        mReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    // Chuyển dữ liệu về đối tượng User
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                       tvUsername.setText(user.getUserName());
+                    }
+                } else {
+                    Log.d("Firebase", "User not found");
+
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Failed to read user data", error.toException());
+            }
+        });
+    }
+
     //Xử lý click cho các nút
     private void setListeners() {
         btnLogout.setOnClickListener(v -> signOutAndRedirect());
