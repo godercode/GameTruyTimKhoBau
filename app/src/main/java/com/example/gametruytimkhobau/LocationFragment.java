@@ -69,6 +69,8 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
         findTreasureButton = view.findViewById(R.id.btn_find_treasure);
         findTreasureButton.setOnClickListener(v -> findNearbyTreasure());
 
+        super.onCreate(savedInstanceState); // gọi pthc onCreate đảm bảo cac logic của lớp cha được thực thii
+        treasureManager = new TreasureManager();
         treasureManager = new TreasureManager();
         initViews();
         return view;
@@ -120,6 +122,12 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
                 treasureManager.collectTreasure(closestMarker); // Xóa kho báu khỏi hệ thống
                 closestMarker.remove(); // Xóa kho báu khỏi bản đồ
                 Toast.makeText(getActivity(), "Bạn đã tìm thấy " + treasureTitle, Toast.LENGTH_SHORT).show();
+
+                // lấy câu hỏi từ mỗi kho báu
+                PuzzleDialogFragment puzzleDialog = new PuzzleDialogFragment();
+                puzzleDialog.show(getActivity().getSupportFragmentManager(), "PuzzleDialog");
+
+
             } else {
                 // Nếu không có kho báu nào trong khoảng cách dưới 30 mét, hiển thị thông tin về kho báu gần nhất
                 if (closestMarker != null) {

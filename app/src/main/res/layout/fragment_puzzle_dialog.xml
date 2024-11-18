@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:layout_marginVertical="150dp"
+    android:gravity="center"
+    android:layout_marginHorizontal="60dp"
+    android:background="#FFF8E1">
+
+
+    <ImageView
+        android:id="@+id/pngkhobau"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_gravity="center"
+        android:contentDescription="Treasure Image"
+        android:scaleType="fitCenter"
+        android:src="@drawable/pngkhobau"/>
+
+    <!-- đáp án thứ nhất -->
+    <TextView
+        android:id="@+id/tvQuestion"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:text="What has keys but can't open locks?"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnAnswer1"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="A Piano"
+        android:backgroundTint="#FFCDD2"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- đáp án thứ hai -->
+    <Button
+        android:id="@+id/btnAnswer2"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="A Map"
+        android:backgroundTint="#FFCDD2"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- đáp án thứ ba -->
+    <Button
+        android:id="@+id/btnAnswer3"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="A Clock"
+        android:backgroundTint="#FFCDD2"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- đáp án thứ tư -->
+    <Button
+        android:id="@+id/btnAnswer4"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="A Phone"
+        android:backgroundTint="#FFCDD2"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:layout_centerHorizontal="true"
+        android:gravity="center">
+
+        <!-- nút ỏ submit -->
+        <Button
+            android:id="@+id/btnSubmit"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:text="Submit"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="16dp"/>
+
+        <!-- nút Bỏ qua -->
+        <Button
+            android:id="@+id/btnSkip"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:text="SKIP"
+            android:backgroundTint="#F44336"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+
+</LinearLayout>
