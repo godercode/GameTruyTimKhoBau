@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,8 +30,22 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LocationFragment extends Fragment implements OnMapReadyCallback {
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mReference;
+    private FirebaseAuth mAuth;
+    private FirebaseUser mUser;
+
+    private String userId;
+    User user;
     private GoogleMap map;
     private FusedLocationProviderClient fusedLocationClient;
     private LatLng currentLocation;
@@ -56,10 +71,34 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
 
         super.onCreate(savedInstanceState); // gọi pthc onCreate đảm bảo cac logic của lớp cha được thực thii
         treasureManager = new TreasureManager();
-
+        treasureManager = new TreasureManager();
+        initViews();
         return view;
     }
 
+    //Hàm khởi tạo
+    private void initViews(){
+        //lấy database realtime ra
+        mDatabase = FirebaseDatabase.getInstance();
+        //Lấy ra user hiện tại thông qua FAuth
+        mAuth = FirebaseAuth.getInstance();
+        mUser = mAuth.getCurrentUser();
+        userId = mUser.getUid();
+        pushDataToFirebase(100);
+    }
+    private void pushDataToFirebase(int score) {
+        mReference = mDatabase.getReference("users").child(userId);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("score", score);
+        mReference.updateChildren(updates, (error, ref) -> {
+            if (error == null) {
+                Log.d("LocationFragment", "Score updated successfully");
+            } else {
+                Log.e("LocationFragment", "Failed to update score", error.toException());
+                Toast.makeText(getActivity(), "Failed to update score: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
     public void hideFindTreasureButton(){
         if(findTreasureButton != null){
             findTreasureButton.setVisibility(View.GONE);
@@ -122,11 +161,6 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
             Toast.makeText(getActivity(), "Chưa xác định được vị trí hiện tại!", Toast.LENGTH_SHORT).show();
         }
     }
-
-
-
-
-
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {

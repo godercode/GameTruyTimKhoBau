@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.PatternsCompat;
 
@@ -18,6 +19,9 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -26,7 +30,8 @@ import java.util.Map;
 
 public class SignupActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
-    private FirebaseFirestore fStore;
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mReference;
     private EditText etEmail, etUsername, etPassword;
     private Button btnSignup;
     private CheckBox cbAgree;
@@ -49,7 +54,7 @@ public class SignupActivity extends AppCompatActivity {
         cbAgree = findViewById(R.id.cd_agree);
         progressBar = findViewById(R.id.pgb_signup);
         mAuth = FirebaseAuth.getInstance();
-        fStore = FirebaseFirestore.getInstance();
+        mDatabase = FirebaseDatabase.getInstance();
     }
     //Hàm này xử lý sự kiên click
     private void setListeners() {
@@ -80,16 +85,9 @@ public class SignupActivity extends AppCompatActivity {
                         verificationEmail();
                         userID = mAuth.getCurrentUser().getUid();
                         //Dùng firestore để lưu dữ liệu người dùng lên firebase
-                        DocumentReference documentReference = fStore.collection("users").document(userID);
-                        Map<String, Object> user = new HashMap<>();
-                        user.put("userName", name);
-                        user.put("email", email);
+                        putUserDataToFirebase(userID, email, name);
+                        progressBar.setVisibility(View.GONE);
 
-                        //Lưu thành công nhảy vào đây
-                        documentReference.set(user).addOnSuccessListener(unused -> {
-                            Log.d("Signup", "onSuccess: user Profile is created for " + userID);
-                            progressBar.setVisibility(View.GONE);
-                        });
                         //Xong là gọi intent chuyển sang cho log vào
                         Log.d("Signup", "createUserWithEmail: success");
                         Toast.makeText(SignupActivity.this, "Welcome " + email, Toast.LENGTH_LONG).show();
@@ -103,6 +101,20 @@ public class SignupActivity extends AppCompatActivity {
                 }
         });
     }
+
+    private void putUserDataToFirebase(String userID, String email, String name) {
+        mReference = mDatabase.getReference("users");
+        User user = new User(email, name);
+        mReference.child(userID).setValue(user, (error, ref) -> {
+            if (error == null) {
+                Log.d("Signup", "putDataUserToFirebase: Success");
+            } else {
+                Log.e("Signup", "putDataUserToFirebase: Failure", error.toException());
+                Toast.makeText(SignupActivity.this, "Failed to save user data: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     //Hàm này xử lý các thực bằng email mặc định copy past
     private void verificationEmail() {
         FirebaseUser user = mAuth.getCurrentUser();
