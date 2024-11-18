@@ -57,26 +57,28 @@ public class LeaderBoardFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userList.clear();
 
-                // Lấy dữ liệu từ Firebase vào userList
+                // Lấy dữ liệu từ Firebase
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                     User user = userSnapshot.getValue(User.class);
                     if (user != null) {
+                        user.setUserId(userSnapshot.getKey()); // Gán key làm userId
                         userList.add(user);
+                    } else {
+                        Log.e("Leaderboard", "Invalid user data: " + userSnapshot.toString());
                     }
                 }
 
                 // Sắp xếp danh sách theo điểm số từ cao đến thấp
                 Collections.sort(userList, (u1, u2) -> Integer.compare(u2.getScore(), u1.getScore()));
 
-                // Cập nhật thuộc tính rank theo thứ tự xếp hạng và cập nhật Firebase
+                // Cập nhật thuộc tính rank và Firebase
                 for (int i = 0; i < userList.size(); i++) {
                     User user = userList.get(i);
-                    user.setRank(i + 1); // Xếp hạng từ 1 trở đi
+                    user.setRank(i + 1);
 
                     // Cập nhật rank vào Firebase
-                    String userId = userList.get(i).getUserId(); // Lấy userId từ Firebase
+                    String userId = user.getUserId();
                     if (userId != null) {
-                        // Cập nhật rank của user lên Firebase
                         mReference.child(userId).child("rank").setValue(user.getRank(), (error, ref) -> {
                             if (error == null) {
                                 Log.d("Leaderboard", "Rank updated successfully for user: " + userId);
@@ -86,6 +88,7 @@ public class LeaderBoardFragment extends Fragment {
                         });
                     }
                 }
+
                 // Cập nhật dữ liệu cho Adapter
                 playerAdapter.setData(userList);
                 playerAdapter.notifyDataSetChanged();
