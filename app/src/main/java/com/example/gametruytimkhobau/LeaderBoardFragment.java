@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -70,13 +71,12 @@ public class LeaderBoardFragment extends Fragment {
 
                 // Sắp xếp danh sách theo điểm số từ cao đến thấp
                 Collections.sort(userList, (u1, u2) -> Integer.compare(u2.getScore(), u1.getScore()));
-
                 // Cập nhật thuộc tính rank và Firebase
                 for (int i = 0; i < userList.size(); i++) {
                     User user = userList.get(i);
                     user.setRank(i + 1);
 
-                    // Cập nhật rank vào Firebase
+                    // Cập nhật rank vào Firebase nếu userId không null
                     String userId = user.getUserId();
                     if (userId != null) {
                         mReference.child(userId).child("rank").setValue(user.getRank(), (error, ref) -> {
@@ -89,19 +89,28 @@ public class LeaderBoardFragment extends Fragment {
                     }
                 }
 
-                // Cập nhật dữ liệu cho Adapter
-                playerAdapter.setData(userList);
-                playerAdapter.notifyDataSetChanged();
+                // Kiểm tra nếu Fragment còn gắn liền với Activity trước khi gọi Glide hoặc cập nhật dữ liệu cho Adapter
+                if (getActivity() != null && isAdded()) {
+                    playerAdapter.setData(userList);
+                    playerAdapter.notifyDataSetChanged();
+                } else {
+                    Log.e("Leaderboard", "Fragment is not attached or Activity is null.");
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e("Leaderboard", "Failed to read user data", error.toException());
-                Toast.makeText(getActivity(), "Failed to fetch data: " + error.getMessage(), Toast.LENGTH_LONG).show();
+
+                // Kiểm tra Context trước khi gọi Toast
+                if (getActivity() != null && isAdded()) {
+                    Toast.makeText(getActivity(), "Failed to fetch data: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                } else {
+                    Log.e("Leaderboard", "Activity is null or Fragment is not attached, cannot show Toast");
+                }
             }
         });
     }
-
 
     private void setLayout() {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), RecyclerView.VERTICAL, false);

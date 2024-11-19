@@ -21,8 +21,8 @@
             />
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/img_player"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_toEndOf="@id/tv_rank"
             android:src="@drawable/ic_user"/>
         <TextView
