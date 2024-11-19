@@ -10,6 +10,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class PlayerAdapter extends RecyclerView.Adapter<PlayerAdapter.UserViewHolder> {
@@ -39,7 +41,11 @@ public class PlayerAdapter extends RecyclerView.Adapter<PlayerAdapter.UserViewHo
         holder.tvRank.setText(String.valueOf(user.getRank()));
         holder.tvName.setText(user.getUserName());
         holder.tvScore.setText(String.valueOf(user.getScore()));
-        holder.imgAvatar.setImageResource(user.getAvatar());
+        Glide.with(holder.itemView.getContext())
+                .load(user.getAvatar()) // URL ảnh
+                .placeholder(R.drawable.ic_user) // Ảnh mặc định
+                .error(R.drawable.ic_user) // Ảnh hiển thị nếu lỗi
+                .into(holder.imgAvatar); // ImageView cần hiển thị
     }
 
     @Override

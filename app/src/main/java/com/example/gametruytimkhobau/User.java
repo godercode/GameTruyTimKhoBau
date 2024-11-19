@@ -4,7 +4,7 @@ public class User {
     private String userId;
     private String email;
     private int rank;
-    private int avatar;
+    private String avatar;
     private String userName;
     private int score;
 
@@ -15,7 +15,7 @@ public class User {
         this.email = email;
         this.userName = userName;
     }
-    public User(String userId, String email, int rank, int avatar, String userName, int score) {
+    public User(String userId, String email, int rank, String avatar, String userName, int score) {
         this.userId = userId;
         this.email = email;
         this.rank = rank;
@@ -44,11 +44,11 @@ public class User {
         this.rank = rank;
     }
 
-    public int getAvatar() {
+    public String getAvatar() {
         return avatar;
     }
 
-    public void setAvatar(int avatar) {
+    public void setAvatar(String avatar) {
         this.avatar = avatar;
     }
 
