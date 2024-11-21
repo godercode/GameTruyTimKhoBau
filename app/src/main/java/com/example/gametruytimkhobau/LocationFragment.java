@@ -81,7 +81,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
         treasureManager = new TreasureManager();
         treasureManager = new TreasureManager();
         initViews();
-        pushPuzzlesDataToFirebase();
+        pushPuzzleDataToFirebase();
         return view;
     }
 
@@ -110,7 +110,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
     }
 
 
-    private void pushPuzzlesDataToFirebase(){
+    private void pushPuzzleDataToFirebase(){
 
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
         DatabaseReference myRef = firebaseDatabase.getReference("puzzles");  // Tham chiếu tới node "puzzles" trong Firebase
