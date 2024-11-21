@@ -15,7 +15,6 @@ import java.util.Random;
 
 public class TreasureManager {
     private List<Marker> treasureMarkers = new ArrayList<>();
-    PuzzleManager puzzleManager = new PuzzleManager();
 
     public void createTreasureLocations(GoogleMap mMap, LatLng centerLocation, LocationFragment context) {
         Random random = new Random();
@@ -31,10 +30,6 @@ public class TreasureManager {
                     .position(treasureLocation)
                     .title("Kho báu #" + (i + 1))
                     .icon(BitmapDescriptorFactory.fromBitmap(scaledBitmap)));
-
-            // Lấy câu đố ngẫu nhiên và gán cho kho báu
-            Puzzle randomPuzzle = puzzleManager.getRandomPuzzle();  // Lấy câu đố ngẫu nhiên
-            marker.setTag(randomPuzzle);  // gán câu đố cho marker
 
 
             treasureMarkers.add(marker);

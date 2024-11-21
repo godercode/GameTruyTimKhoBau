@@ -21,7 +21,6 @@ public class PuzzleDialogFragment extends DialogFragment {
     private Button selectedButton = null;  // Button đã được chọn
     private int correctAnswerIndex = 0;  // Chỉ số đáp án đúng (bắt đầu từ 0)
     //private PointManager pointManager;
-    private PuzzleManager puzzleManager;//quản lý câu đố
     private Puzzle currentPuzzle;//câu đố hiện tại
 
     @SuppressLint("MissingInflatedId")
@@ -40,9 +39,6 @@ public class PuzzleDialogFragment extends DialogFragment {
         btnSubmit = view.findViewById(R.id.btnSubmit);
         btnSkip = view.findViewById(R.id.btnSkip);
 
-        // lấy câu đố ngẫu nhiên
-        puzzleManager = new PuzzleManager();
-        currentPuzzle = puzzleManager.getRandomPuzzle();
 
         if (currentPuzzle != null) {
             // gán câu hỏi và đáp án vào các button
@@ -117,6 +113,9 @@ public class PuzzleDialogFragment extends DialogFragment {
     }
 
 
+    public void setCurrentPuzzle(Puzzle puzzle) {
+        this.currentPuzzle = puzzle;
+    }
     // Hàm trả về chỉ số của đáp án đã chọn (0 -> 3)
     private int getSelectedAnswerIndex() {
         if (selectedButton == answer1) {

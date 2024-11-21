@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -32,10 +33,15 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class LocationFragment extends Fragment implements OnMapReadyCallback {
@@ -52,6 +58,8 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
     private TreasureManager treasureManager;
     private Marker selectedTreasureMarker = null;
     private Button findTreasureButton;
+
+    private List<Puzzle> puzzlesList;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -73,6 +81,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
         treasureManager = new TreasureManager();
         treasureManager = new TreasureManager();
         initViews();
+        pushPuzzleDataToFirebase();
         return view;
     }
 
@@ -99,6 +108,48 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
             }
         });
     }
+
+
+    private void pushPuzzleDataToFirebase(){
+
+        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = firebaseDatabase.getReference("puzzles");  // Tham chiếu tới node "puzzles" trong Firebase
+
+        // Khởi tạo danh sách câu đố
+        puzzlesList = new ArrayList<>();
+
+        // push câu đổ vào firebase
+        puzzlesList.add(new Puzzle(1, "2 + 2 = ?", 1, Arrays.asList("3", "4", "5", "6"), 5));
+        puzzlesList.add(new Puzzle(2, "5 - 3 = ?", 1, Arrays.asList("1", "2", "3", "4"), 5));
+        puzzlesList.add(new Puzzle(3, "6 x 3 = ?", 2, Arrays.asList("15", "16", "18", "20"), 10));
+        puzzlesList.add(new Puzzle(4, "9 / 3 = ?", 2, Arrays.asList("1", "2", "3", "4"), 5));
+        puzzlesList.add(new Puzzle(5, "7 + 8 = ?", 1, Arrays.asList("14", "15", "16", "17"), 5));
+
+        // xử lý push dữ liệu lên Firebase Realtime Database
+        myRef.setValue(puzzlesList, new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                if (error != null) {
+                    Toast.makeText(getActivity(),"All puzzles saved unsuccessfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getActivity(), "All puzzles saved successfully", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void showRandomPuzzleDialog() {
+        if (!puzzlesList.isEmpty()) {
+            Collections.shuffle(puzzlesList); // Xáo trộn danh sách câu đố
+            Puzzle randomPuzzle = puzzlesList.get(0); // Lấy câu đố đầu tiên sau khi xáo trộn
+
+            PuzzleDialogFragment puzzleDialog = new PuzzleDialogFragment();
+            puzzleDialog.setCurrentPuzzle(randomPuzzle); // Đặt câu đố cho dialog
+            puzzleDialog.show(getActivity().getSupportFragmentManager(), "PuzzleDialog");
+        } else {
+            Toast.makeText(getActivity(), "Chưa có câu đố nào!", Toast.LENGTH_SHORT).show();
+        }
+    }
     public void hideFindTreasureButton(){
         if(findTreasureButton != null){
             findTreasureButton.setVisibility(View.GONE);
@@ -123,9 +174,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
                 closestMarker.remove(); // Xóa kho báu khỏi bản đồ
                 Toast.makeText(getActivity(), "Bạn đã tìm thấy " + treasureTitle, Toast.LENGTH_SHORT).show();
 
-                // lấy câu hỏi từ mỗi kho báu
-                PuzzleDialogFragment puzzleDialog = new PuzzleDialogFragment();
-                puzzleDialog.show(getActivity().getSupportFragmentManager(), "PuzzleDialog");
+                showRandomPuzzleDialog();
 
 
             } else {
