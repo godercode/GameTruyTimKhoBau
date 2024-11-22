@@ -145,7 +145,7 @@ public class PuzzleDialogFragment extends DialogFragment {
 
         DatabaseReference userRef = mDatabase.getReference("users").child(userId);
 
-        userRef.addValueEventListener(new ValueEventListener() {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
@@ -158,12 +158,11 @@ public class PuzzleDialogFragment extends DialogFragment {
                 if(scoreUpdateListener != null){
                     scoreUpdateListener.onScoreUpdated(newScore);
                 }
-                Toast.makeText(getActivity(), "Điểm đã được cập nhật",Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getActivity(), "Lỗi khi lấy dữ liệu từ Firebase", Toast.LENGTH_SHORT).show();
+
             }
         });
 
