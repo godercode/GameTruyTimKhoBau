@@ -108,7 +108,7 @@ public class UserFragment extends Fragment {
                     // Chuyển dữ liệu về đối tượng User
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
-                       tvUsername.setText(user.getUserName());
+                        tvUsername.setText(user.getUserName());
                         Glide.with(getActivity()).load(user.getAvatar()).error(R.drawable.ic_user).into(imgUserAvatar);
                     }
                 } else {
@@ -138,8 +138,8 @@ public class UserFragment extends Fragment {
     }
 
     private void requestPermission() {
-      Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-      startActivityForResult(intent, 1000);
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, 1000);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class UserFragment extends Fragment {
             });
         }
     }
-//Tạo cái dialog cho nhập pass mới
+    //Tạo cái dialog cho nhập pass mới
     private void createResetPassDialog() {
         EditText resetPassword = new EditText(getActivity());
         AlertDialog.Builder passwordResetDialog = new AlertDialog.Builder(getActivity());
