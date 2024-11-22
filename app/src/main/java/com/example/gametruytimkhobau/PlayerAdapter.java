@@ -17,14 +17,18 @@ import java.util.List;
 public class PlayerAdapter extends RecyclerView.Adapter<PlayerAdapter.UserViewHolder> {
     private Context mContext;
     private List<User> mListUser;
+    private OnItemClickListener mListener;
 
-    public PlayerAdapter(Context mContext) {
+    public PlayerAdapter(Context mContext, OnItemClickListener listener) {
         this.mContext = mContext;
+        this.mListener = listener;
     }
-    public void setData(List<User> list){
+
+    public void setData(List<User> list) {
         this.mListUser = list;
         notifyDataSetChanged();
     }
+
     @NonNull
     @Override
     public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -35,36 +39,44 @@ public class PlayerAdapter extends RecyclerView.Adapter<PlayerAdapter.UserViewHo
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = mListUser.get(position);
-        if(user == null){
+        if (user == null) {
             return;
         }
+
         holder.tvRank.setText(String.valueOf(user.getRank()));
         holder.tvName.setText(user.getUserName());
         holder.tvScore.setText(String.valueOf(user.getScore()));
         Glide.with(holder.itemView.getContext())
-                .load(user.getAvatar()) // URL ảnh
-                .placeholder(R.drawable.ic_user) // Ảnh mặc định
-                .error(R.drawable.ic_user) // Ảnh hiển thị nếu lỗi
-                .into(holder.imgAvatar); // ImageView cần hiển thị
+                .load(user.getAvatar())
+                .placeholder(R.drawable.ic_user)
+                .error(R.drawable.ic_user)
+                .into(holder.imgAvatar);
+
+        // Set click listener
+        holder.itemView.setOnClickListener(v -> mListener.onItemClick(user));
     }
 
     @Override
     public int getItemCount() {
-        if(mListUser != null){
-            return mListUser.size();
-        }
-        return 0;
+        return mListUser != null ? mListUser.size() : 0;
     }
 
-    public class UserViewHolder extends RecyclerView.ViewHolder{
+    public class UserViewHolder extends RecyclerView.ViewHolder {
         private TextView tvRank, tvName, tvScore;
         private ImageView imgAvatar;
+
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvRank =itemView.findViewById(R.id.tv_rank);
-            tvName =itemView.findViewById(R.id.tv_player);
-            tvScore =itemView.findViewById(R.id.tv_score);
-            imgAvatar =itemView.findViewById(R.id.img_player);
+            tvRank = itemView.findViewById(R.id.tv_rank);
+            tvName = itemView.findViewById(R.id.tv_player);
+            tvScore = itemView.findViewById(R.id.tv_score);
+            imgAvatar = itemView.findViewById(R.id.img_player);
         }
     }
+
+    // Interface for click listener
+    public interface OnItemClickListener {
+        void onItemClick(User user);
+    }
 }
+

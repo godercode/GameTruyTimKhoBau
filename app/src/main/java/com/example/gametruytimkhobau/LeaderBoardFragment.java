@@ -1,10 +1,15 @@
 package com.example.gametruytimkhobau;
 
 import android.os.Bundle;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LeaderBoardFragment extends Fragment {
+public class LeaderBoardFragment extends Fragment implements PlayerAdapter.OnItemClickListener {
     private FirebaseAuth mAuth;
     private FirebaseDatabase mDatabase;
     private DatabaseReference mReference;
@@ -48,7 +53,7 @@ public class LeaderBoardFragment extends Fragment {
         mDatabase = FirebaseDatabase.getInstance();
         mUser = mAuth.getCurrentUser();
         rcvPlayer = view.findViewById(R.id.rcv_player);
-        playerAdapter = new PlayerAdapter(getActivity());
+        playerAdapter = new PlayerAdapter(getActivity(), this);
     }
 
     private void getUserDataFromFirebase() {
@@ -117,4 +122,46 @@ public class LeaderBoardFragment extends Fragment {
         rcvPlayer.setLayoutManager(linearLayoutManager);
         rcvPlayer.setAdapter(playerAdapter);
     }
+
+    @Override
+    public void onItemClick(User user) {
+        // Hiển thị dialog thông tin chi tiết người chơi
+        showPlayerInfoDialog(user);
+    }
+
+    private void showPlayerInfoDialog(User user) {
+        // Tạo AlertDialog.Builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+        // Tạo View cho dialog
+        View view = getLayoutInflater().inflate(R.layout.dialog_player_details, null);
+        builder.setView(view);
+
+        Log.d("LeaderBoard", user.getAvatar());
+
+        // Liên kết các View trong layout
+        ImageView imgAvatar = view.findViewById(R.id.img_avatar);
+        TextView tvTitle = view.findViewById(R.id.tv_title);
+        TextView tvName = view.findViewById(R.id.tv_name);
+        TextView tvEmail = view.findViewById(R.id.tv_email);
+        TextView tvScore = view.findViewById(R.id.tv_score);
+        Button btnOk = view.findViewById(R.id.btn_ok);
+
+        // Gán dữ liệu từ đối tượng User vào các View
+        tvTitle.setText(user.getUserName());
+        Glide.with(this)
+                .load(user.getAvatar())
+                .error(R.drawable.ic_user)
+                .into(imgAvatar);
+
+        tvName.setText(user.getUserName());
+        tvEmail.setText(user.getEmail());
+        tvScore.setText("Score:" +String.valueOf(user.getScore()));
+
+        AlertDialog dialog = builder.create();
+        btnOk.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
 }
+
