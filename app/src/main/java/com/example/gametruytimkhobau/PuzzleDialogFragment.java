@@ -149,15 +149,29 @@ public class PuzzleDialogFragment extends DialogFragment {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                int currentScore = user.getScore();
+                if (snapshot.exists()) { // Kiểm tra snapshot có tồn tại
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) { // Kiểm tra user không null
+                        // Lấy điểm hiện tại hoặc gán giá trị mặc định là 0
+                        int currentScore = user.getScore() != 0 ? user.getScore() : 0;
+                        int newScore = currentScore + earnedScore;
 
-                int newScore = currentScore + earnedScore;
-                user.setScore(newScore);
-                userRef.setValue(user);
-
-                if(scoreUpdateListener != null){
-                    scoreUpdateListener.onScoreUpdated(newScore);
+                        // Cập nhật điểm mới cho user
+                        user.setScore(newScore);
+                        userRef.setValue(user) // Cập nhật Firebase
+                                .addOnSuccessListener(aVoid -> {
+                                    if (scoreUpdateListener != null) {
+                                        scoreUpdateListener.onScoreUpdated(newScore); // Gọi listener nếu có
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("FirebaseError", "Failed to update score: " + e.getMessage());
+                                });
+                    } else {
+                        Log.e("FirebaseError", "User object is null");
+                    }
+                } else {
+                    Log.e("FirebaseError", "Snapshot does not exist for userRef");
                 }
             }
 

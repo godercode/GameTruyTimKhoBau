@@ -121,13 +121,25 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
         userId = mUser.getUid();
 
         DatabaseReference userRef = mDatabase.getReference("users").child(userId);
-
+        if (mUser == null) {
+            // Người dùng chưa đăng nhập, yêu cầu họ đăng nhập
+            Toast.makeText(getActivity(), "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+            return;
+        }
         userRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                int currentScore = user.getScore();
-                btnShowScore.setText("Điểm :" + currentScore);
+                if (snapshot.exists()) {
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) { // Kiểm tra nếu user không null
+                        int currentScore = user.getScore();
+                        btnShowScore.setText("Điểm: " + currentScore);
+                    } else {
+                        Toast.makeText(getActivity(), "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(getActivity(), "Dữ liệu không tồn tại", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
@@ -174,8 +186,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
                 if (error != null) {
                     Toast.makeText(getActivity(),"Dữ liệu câu đố chưa được thêm", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getActivity(), "List câu đố được thêm thành công", Toast.LENGTH_SHORT).show();
-                }
+                     }
             }
         });
     }
