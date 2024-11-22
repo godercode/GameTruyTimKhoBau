@@ -79,5 +79,4 @@ public class TreasureInfoFragment extends Fragment {
         return view;
     }
 
-
 }
