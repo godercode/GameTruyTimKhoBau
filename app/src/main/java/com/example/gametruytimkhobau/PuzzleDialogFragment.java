@@ -116,6 +116,7 @@ public class PuzzleDialogFragment extends DialogFragment {
                 int earnedScore = currentPuzzle.getPoint(); // Lấy điểm từ câu hỏi hiện tại
                 UpdateScoreFirebase(earnedScore);
                 dismiss();
+                Toast.makeText(getActivity(), "Bạn đã nhận được thêm "+ earnedScore +" điểm",Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
                 dismiss();
