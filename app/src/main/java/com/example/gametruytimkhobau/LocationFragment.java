@@ -33,9 +33,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LocationFragment extends Fragment implements OnMapReadyCallback {
+public class LocationFragment extends Fragment implements OnMapReadyCallback, PuzzleDialogFragment.OnScoreUpdateListener {
     private FirebaseDatabase mDatabase;
     private DatabaseReference mReference;
     private FirebaseAuth mAuth;
@@ -61,12 +63,14 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
 
     private List<Puzzle> puzzlesList;
 
+    private Button btnShowScore;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_location, container, false);
 
         // Khởi tạo FusedLocationProviderClient để lấy vị trí cua minfh
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        btnShowScore = view.findViewById(R.id.btn_show_score);
 
         // Khởi tạo mapơ
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
@@ -79,12 +83,25 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
 
         super.onCreate(savedInstanceState); // gọi pthc onCreate đảm bảo cac logic của lớp cha được thực thii
         treasureManager = new TreasureManager();
-        treasureManager = new TreasureManager();
-        initViews();
+//        initViews();
         pushPuzzlesDataToFirebase();
+        getScoreOnFireBase();
         return view;
     }
 
+    @Override
+    public void onScoreUpdated(int newScore) {
+        // Cập nhật điểm số lên nút btn_show_score
+        if (btnShowScore != null) {
+            btnShowScore.setText("Điểm: " + newScore);
+        }
+    }
+
+    private void openPuzzleDialog() {
+        PuzzleDialogFragment puzzleDialog = new PuzzleDialogFragment();
+        puzzleDialog.setOnScoreUpdateListener(this); // Đăng ký callback
+        puzzleDialog.show(getChildFragmentManager(), "PuzzleDialog");
+    }
     //Hàm khởi tạo
     private void initViews(){
         //lấy database realtime ra
@@ -93,21 +110,46 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
         mAuth = FirebaseAuth.getInstance();
         mUser = mAuth.getCurrentUser();
         userId = mUser.getUid();
-        pushDataToFirebase(100);
+//        pushDataToFirebase(100);
     }
-    private void pushDataToFirebase(int score) {
-        mReference = mDatabase.getReference("users").child(userId);
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("score", score);
-        mReference.updateChildren(updates, (error, ref) -> {
-            if (error == null) {
-                Log.d("LocationFragment", "Score updated successfully");
-            } else {
-                Log.e("LocationFragment", "Failed to update score", error.toException());
-                Toast.makeText(getActivity(), "Failed to update score: " + error.getMessage(), Toast.LENGTH_LONG).show();
+
+    private void getScoreOnFireBase(){
+        mDatabase = FirebaseDatabase.getInstance();
+        //Lấy ra user hiện tại thông qua FAuth
+        mAuth = FirebaseAuth.getInstance();
+        mUser = mAuth.getCurrentUser();
+        userId = mUser.getUid();
+
+        DatabaseReference userRef = mDatabase.getReference("users").child(userId);
+
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+                int currentScore = user.getScore();
+                btnShowScore.setText("Điểm :" + currentScore);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getActivity(), "Không thể cập nhật điểm", Toast.LENGTH_SHORT).show();
             }
         });
     }
+
+//    private void pushDataToFirebase(int score) {
+//        mReference = mDatabase.getReference("users").child(userId);
+//        Map<String, Object> updates = new HashMap<>();
+//        updates.put("score", score);
+//        mReference.updateChildren(updates, (error, ref) -> {
+//            if (error == null) {
+//                Log.d("LocationFragment", "Score updated successfully");
+//            } else {
+//                Log.e("LocationFragment", "Failed to update score", error.toException());
+//                Toast.makeText(getActivity(), "Failed to update score: " + error.getMessage(), Toast.LENGTH_LONG).show();
+//            }
+//        });
+//    }
 
 
     private void pushPuzzlesDataToFirebase(){
@@ -130,9 +172,9 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
                 if (error != null) {
-                    Toast.makeText(getActivity(),"All puzzles saved unsuccessfully", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(),"Dữ liệu câu đố chưa được thêm", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getActivity(), "All puzzles saved successfully", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "List câu đố được thêm thành công", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -140,12 +182,12 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback {
 
     private void showRandomPuzzleDialog() {
         if (!puzzlesList.isEmpty()) {
-            Collections.shuffle(puzzlesList); // Xáo trộn danh sách câu đố
-            Puzzle randomPuzzle = puzzlesList.get(0); // Lấy câu đố đầu tiên sau khi xáo trộn
+            Collections.shuffle(puzzlesList); // trộn danh sách câu đố
+            Puzzle randomPuzzle = puzzlesList.get(0); // Lấy câu đố đầu tiên sau khi trộn
 
             PuzzleDialogFragment puzzleDialog = new PuzzleDialogFragment();
             puzzleDialog.setCurrentPuzzle(randomPuzzle); // Đặt câu đố cho dialog
-            puzzleDialog.show(getActivity().getSupportFragmentManager(), "PuzzleDialog");
+            puzzleDialog.show(getActivity().getSupportFragmentManager(), "PuzzleDialogFragment");
         } else {
             Toast.makeText(getActivity(), "Chưa có câu đố nào!", Toast.LENGTH_SHORT).show();
         }

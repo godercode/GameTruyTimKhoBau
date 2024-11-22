@@ -10,6 +10,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|top"
+        android:layout_margin="16dp">
+
+        <!-- Nút hiển thị điểm -->
+        <Button
+            android:id="@+id/btn_show_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Điểm: 0" />
+
+        <!-- Hình ảnh đồng xu -->
+        <ImageView
+            android:id="@+id/img_coin"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/coin_icon"
+            android:contentDescription="Đồng xu"
+            android:layout_gravity="center"/>
+    </LinearLayout>
     <Button
         android:id="@+id/btn_find_treasure"
         android:layout_width="wrap_content"

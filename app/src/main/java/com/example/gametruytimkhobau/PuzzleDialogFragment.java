@@ -2,26 +2,56 @@ package com.example.gametruytimkhobau;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class PuzzleDialogFragment extends DialogFragment {
 
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mReference;
+    private FirebaseAuth mAuth;
+    private FirebaseUser mUser;
+    private String userId;
     private TextView questionText;//text hiện thị cau hỏi
     private Button answer1, answer2, answer3, answer4, btnSubmit, btnSkip;
     private Button selectedButton = null;  // Button đã được chọn
     private int correctAnswerIndex = 0;  // Chỉ số đáp án đúng (bắt đầu từ 0)
-    //private PointManager pointManager;
     private Puzzle currentPuzzle;//câu đố hiện tại
+
+    public interface OnScoreUpdateListener{
+        void onScoreUpdated(int newSocre);
+    }
+
+    private OnScoreUpdateListener scoreUpdateListener;
+    public void setOnScoreUpdateListener(OnScoreUpdateListener listener){
+        this.scoreUpdateListener = listener;
+    }
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -77,45 +107,69 @@ public class PuzzleDialogFragment extends DialogFragment {
                 return;
             }
 
-            // lấy id đáp án người chơi đã chọn gán cho biến selectedAnswerIndex
+            // lấy chỉ số của đáp án mà người chơi đã chọn gán cho biến selectedAnswerIndex
             int selectedAnswerIndex = getSelectedAnswerIndex();
 
-            // Kiểm tra đáp án đúng/sai
+            // Kiểm tra đáp án đúng/sai : nếu chỉ so mà ng chơi đã chọn bằng với chỉ so của đ/án đúng thì cộng điểm và thong báo
             if (selectedAnswerIndex == correctAnswerIndex) {
                 // xử lý cập nhật điểm cho người chơi
-                int pointEarned = currentPuzzle.getPoint(); // Lấy điểm từ câu hỏi hiện tại
-                //pointManager.updatePoint(pointEarned); // Cập nhật điểm (giả sử bạn đã tạo hàm updatePoint trong PointManager)
-
-                // Hiển thị thông báo cho người chơi
-                Toast.makeText(getActivity(), "Chúc mừng! Bạn đã trả lời đúng và nhận được " + pointEarned + " điểm.", Toast.LENGTH_SHORT).show();
-
-                // Đặt độ trễ nhỏ để hiển thị thông báo trước khi đóng dialog
-//                selectedButton.postDelayed(this::dismiss, 1000);
+                int earnedScore = currentPuzzle.getPoint(); // Lấy điểm từ câu hỏi hiện tại
+                UpdateScoreFirebase(earnedScore);
                 dismiss();
-
             } else {
                 Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
-                // Đóng dialog
                 dismiss();
             }
+
         });
 
 
         // Sự kiện click cho nút Bỏ qua
-        btnSkip.setOnClickListener(v -> {
-            // Đóng dialog và quay lại bản đồ
-            dismiss();
-
-        });
+        btnSkip.setOnClickListener(v ->dismiss());
 
         builder.setView(view);
         return builder.create();
     }
-
-
     public void setCurrentPuzzle(Puzzle puzzle) {
         this.currentPuzzle = puzzle;
     }
+
+
+    // Cập nhâật điểm vào firebase sau khi được cộng thêm điểm
+    private void UpdateScoreFirebase(int earnedScore){
+        mDatabase = FirebaseDatabase.getInstance();
+        //Lấy ra user hiện tại thông qua FAuth
+        mAuth = FirebaseAuth.getInstance();
+        mUser = mAuth.getCurrentUser();
+        userId = mUser.getUid();
+
+        DatabaseReference userRef = mDatabase.getReference("users").child(userId);
+
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+                int currentScore = user.getScore();
+
+                int newScore = currentScore + earnedScore;
+                user.setScore(newScore);
+                userRef.setValue(user);
+
+                if(scoreUpdateListener != null){
+                    scoreUpdateListener.onScoreUpdated(newScore);
+                }
+                Toast.makeText(getActivity(), "Điểm đã được cập nhật",Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getActivity(), "Lỗi khi lấy dữ liệu từ Firebase", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+
     // Hàm trả về chỉ số của đáp án đã chọn (0 -> 3)
     private int getSelectedAnswerIndex() {
         if (selectedButton == answer1) {
