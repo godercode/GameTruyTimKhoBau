@@ -193,6 +193,7 @@ public class PuzzleDialogFragment extends DialogFragment {
                                 });
                     } else {
                         Log.e("FirebaseError", "Đối tượng user null");
+
                     }
                 } else {
                     Log.e("FirebaseError", "Snapshot does not exist for userRef");

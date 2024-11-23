@@ -147,6 +147,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
                 }
             });
         }
+
     }
 
 //    private void pushDataToFirebase(int score) {
