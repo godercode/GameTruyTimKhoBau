@@ -138,11 +138,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
                             Toast.makeText(getActivity(), "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        // Tạo người dùng mới trong Firebase
-                        User newUser = new User();
-                        newUser.setScore(0);  // Điểm mặc định
-                        userRef.setValue(newUser);
-                        Toast.makeText(getActivity(), "Bắt đầu chơi", Toast.LENGTH_SHORT).show();}
+                        Toast.makeText(getActivity(), "Người chơi không có dữ liệu", Toast.LENGTH_SHORT).show();}
                 }
 
                 @Override

@@ -28,6 +28,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.w3c.dom.Text;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,8 +40,8 @@ public class PuzzleDialogFragment extends DialogFragment {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private String userId;
-    private TextView questionText;//text hiện thị cau hỏi
-    private Button answer1, answer2, answer3, answer4, btnSubmit, btnSkip;
+    private TextView questionText, scoreView;//text hiện thị cau hỏi
+    private Button answer1, answer2, answer3, answer4, btnSubmit, btnSkip, btnReceiveScore;
     private Button selectedButton = null;  // Button đã được chọn
     private int correctAnswerIndex = 0;  // Chỉ số đáp án đúng (bắt đầu từ 0)
     private Puzzle currentPuzzle;//câu đố hiện tại
@@ -116,7 +118,9 @@ public class PuzzleDialogFragment extends DialogFragment {
                 int earnedScore = currentPuzzle.getPoint(); // Lấy điểm từ câu hỏi hiện tại
                 UpdateScoreFirebase(earnedScore);
                 dismiss();
-                Toast.makeText(getActivity(), "Bạn đã nhận được thêm "+ earnedScore +" điểm",Toast.LENGTH_SHORT).show();
+//                showScoreDialog(earnedScore);
+//                getDialog().hide();
+
             } else {
                 Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
                 dismiss();
@@ -135,6 +139,26 @@ public class PuzzleDialogFragment extends DialogFragment {
         this.currentPuzzle = puzzle;
     }
 
+
+    private void showScoreDialog(int earnedScore){
+        Dialog dialog = new Dialog(getContext());
+        dialog.setContentView(R.layout.dialog_correct_answer_notifcation);
+        dialog.setCancelable(false);
+
+        scoreView = dialog.findViewById(R.id.score);
+        btnReceiveScore = dialog.findViewById(R.id.btn_show_score);
+
+        scoreView.setText(String.valueOf(earnedScore));
+        if (btnReceiveScore == null) {
+            Log.e("DEBUG", "Button btn_receive_score not found!");
+        } else {
+            btnReceiveScore.setOnClickListener(v -> {
+                // Hành động khi bấm nút
+                dialog.dismiss();
+            });
+        }
+        dialog.show();
+    }
 
     // Cập nhâật điểm vào firebase sau khi được cộng thêm điểm
     private void UpdateScoreFirebase(int earnedScore){

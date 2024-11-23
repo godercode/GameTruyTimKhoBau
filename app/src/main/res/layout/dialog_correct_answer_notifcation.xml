@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#00000000">
+
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="175dp"
+        android:layout_gravity="center"
+        android:src="@drawable/pngkhobau" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+
+        <TextView
+            android:id="@+id/score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="100"
+            android:textSize="24sp"
+            android:textColor="@color/black"
+            android:textStyle="bold" />
+
+        <!-- Biểu tượng đồng xu -->
+        <ImageView
+            android:id="@+id/icon_coin"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:src="@drawable/coin_icon"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <!-- Chữ chúc mừng -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Congratulation!"
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        android:gravity="center"
+        android:layout_marginTop="16dp" />
+
+    <!-- Nút hành động -->
+    <Button
+        android:id="@+id/btn_receive_score"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Nhận"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center"/>
+</LinearLayout>
