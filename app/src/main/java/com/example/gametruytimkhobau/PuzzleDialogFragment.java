@@ -114,8 +114,9 @@ public class PuzzleDialogFragment extends DialogFragment {
             if (selectedAnswerIndex == correctAnswerIndex) {
                 // xử lý cập nhật điểm cho người chơi
                 int earnedScore = currentPuzzle.getPoint(); // Lấy điểm từ câu hỏi hiện tại
-                UpdateScoreFirebase(earnedScore);
-                dismiss();
+                showScoreDialog(earnedScore);
+                getDialog().hide();
+
             } else {
                 Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
                 dismiss();
@@ -134,6 +135,24 @@ public class PuzzleDialogFragment extends DialogFragment {
         this.currentPuzzle = puzzle;
     }
 
+    private void showScoreDialog(int earnedScore){
+        if (getContext() != null && isAdded()) {
+            //Đảm bảo fragment hiện đang được liên kết với một context hợp lệ (thường là Activity) và đã được thêm vào giao diện người dùng.
+            Dialog dialog = new Dialog(getContext(), R.style.TransparentDialog);
+            dialog.setContentView(R.layout.dialog_correct_notification);
+            dialog.setCancelable(false);
+
+            TextView scoreView = dialog.findViewById(R.id.scoreText);
+            Button btn_receive_score = dialog.findViewById(R.id.btn_receive_score);
+
+            scoreView.setText(String.valueOf(earnedScore));
+            btn_receive_score.setOnClickListener(v -> {
+                UpdateScoreFirebase(earnedScore);
+                dialog.dismiss();
+            });
+            dialog.show();
+        }
+    }
 
     // Cập nhâật điểm vào firebase sau khi được cộng thêm điểm
     private void UpdateScoreFirebase(int earnedScore){
@@ -148,15 +167,29 @@ public class PuzzleDialogFragment extends DialogFragment {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                int currentScore = user.getScore();
+                if (snapshot.exists()) { // Kiểm tra snapshot có tồn tại
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) { // Kiểm tra user không null
+                        // Lấy điểm hiện tại hoặc gán giá trị mặc định là 0
+                        int currentScore = user.getScore() != 0 ? user.getScore() : 0;
+                        int newScore = currentScore + earnedScore;
 
-                int newScore = currentScore + earnedScore;
-                user.setScore(newScore);
-                userRef.setValue(user);
-
-                if(scoreUpdateListener != null){
-                    scoreUpdateListener.onScoreUpdated(newScore);
+                        // Cập nhật điểm mới cho user
+                        user.setScore(newScore);
+                        userRef.setValue(user) // Cập nhật Firebase
+                                .addOnSuccessListener(aVoid -> {
+                                    if (scoreUpdateListener != null) {
+                                        scoreUpdateListener.onScoreUpdated(newScore); // Gọi listener nếu có
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("FirebaseError", "Failed to update score: " + e.getMessage());
+                                });
+                    } else {
+                        Log.e("FirebaseError", "Đối tượng user null");
+                    }
+                } else {
+                    Log.e("FirebaseError", "Snapshot does not exist for userRef");
                 }
             }
 

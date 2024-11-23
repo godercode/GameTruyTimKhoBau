@@ -10,27 +10,33 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!--  Phaan hiển thị điểm trên màn hình location  -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="35dp"
         android:layout_gravity="start|top"
+        android:background="@drawable/backgroun_score"
         android:layout_margin="16dp">
 
         <!-- Nút hiển thị điểm -->
         <Button
             android:id="@+id/btn_show_score"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Điểm: 0" />
+            android:background="@android:color/transparent"
+            android:textColor="@color/black"
+            android:textAlignment="center"
+            android:text="0" />
 
         <!-- Hình ảnh đồng xu -->
         <ImageView
             android:id="@+id/img_coin"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
             android:src="@drawable/coin_icon"
             android:contentDescription="Đồng xu"
+            android:layout_marginRight="5dp"
             android:layout_gravity="center"/>
     </LinearLayout>
     <Button

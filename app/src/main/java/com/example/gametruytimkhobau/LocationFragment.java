@@ -93,7 +93,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
     public void onScoreUpdated(int newScore) {
         // Cập nhật điểm số lên nút btn_show_score
         if (btnShowScore != null) {
-            btnShowScore.setText("Điểm: " + newScore);
+            btnShowScore.setText(String.valueOf(newScore));
         }
     }
 
@@ -121,20 +121,33 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
         userId = mUser.getUid();
 
         DatabaseReference userRef = mDatabase.getReference("users").child(userId);
+        if (mUser == null) {
+            // Người dùng chưa đăng nhập, yêu cầu họ đăng nhập
+            Toast.makeText(getActivity(), "Vui lòng đăng nhập", Toast.LENGTH_SHORT).show();
+            return;
+        } else {
+            userRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        User user = snapshot.getValue(User.class);
+                        if (user != null) { // Kiểm tra nếu user không null
+                            int currentScore = user.getScore();
+                            btnShowScore.setText(String.valueOf(currentScore));
+                        } else {
+                            Toast.makeText(getActivity(), "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getActivity(), "Không có thông tin người chơi", Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                int currentScore = user.getScore();
-                btnShowScore.setText("Điểm :" + currentScore);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getActivity(), "Không thể cập nhật điểm", Toast.LENGTH_SHORT).show();
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(getActivity(), "Không thể cập nhật điểm", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
 //    private void pushDataToFirebase(int score) {
