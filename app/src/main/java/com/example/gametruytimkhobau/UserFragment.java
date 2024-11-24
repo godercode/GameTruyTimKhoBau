@@ -220,5 +220,4 @@ public class UserFragment extends Fragment {
             Log.e("UserFragment", "URI is null!");
         }
     }
-
 }
