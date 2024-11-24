@@ -20,6 +20,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.Marker;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -34,7 +35,6 @@ import java.util.Map;
 public class PuzzleDialogFragment extends DialogFragment {
 
     private FirebaseDatabase mDatabase;
-    private DatabaseReference mReference;
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
     private String userId;
@@ -43,16 +43,17 @@ public class PuzzleDialogFragment extends DialogFragment {
     private Button selectedButton = null;  // Button đã được chọn
     private int correctAnswerIndex = 0;  // Chỉ số đáp án đúng (bắt đầu từ 0)
     private Puzzle currentPuzzle;//câu đố hiện tại
+    private Marker closestMarker;
+    private OnScoreUpdateListener scoreUpdateListener;
+
 
     public interface OnScoreUpdateListener{
         void onScoreUpdated(int newSocre);
     }
-
-    private OnScoreUpdateListener scoreUpdateListener;
-    public void setOnScoreUpdateListener(OnScoreUpdateListener listener){
-        this.scoreUpdateListener = listener;
+    public void setCurrentPuzzle(Puzzle puzzle, Marker marker) {
+        this.currentPuzzle = puzzle;
+        this.closestMarker = marker;
     }
-
     @SuppressLint("MissingInflatedId")
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -93,7 +94,6 @@ public class PuzzleDialogFragment extends DialogFragment {
                 selectedButton.setBackgroundColor(Color.YELLOW);  // đổi màu khi button được chọn
             }
         };
-
         // gán sự kiện click cho từng đáp án
         answer1.setOnClickListener(answerClickListener);
         answer2.setOnClickListener(answerClickListener);
@@ -107,32 +107,26 @@ public class PuzzleDialogFragment extends DialogFragment {
                 return;
             }
 
-            // lấy chỉ số của đáp án mà người chơi đã chọn gán cho biến selectedAnswerIndex
             int selectedAnswerIndex = getSelectedAnswerIndex();
+            Log.d("PuzzleDialogFragment", "Selected index: " + selectedAnswerIndex);
+            Log.d("PuzzleDialogFragment", "Correct index: " + correctAnswerIndex);
 
-            // Kiểm tra đáp án đúng/sai : nếu chỉ so mà ng chơi đã chọn bằng với chỉ so của đ/án đúng thì cộng điểm và thong báo
             if (selectedAnswerIndex == correctAnswerIndex) {
-                // xử lý cập nhật điểm cho người chơi
-                int earnedScore = currentPuzzle.getPoint(); // Lấy điểm từ câu hỏi hiện tại
-                showScoreDialog(earnedScore);
-                getDialog().hide();
+                int earnedScore = currentPuzzle.getPoint(); // Điểm của câu hỏi
+                closestMarker.remove(); // Loại bỏ marker trên bản đồ
 
+                Log.d("PuzzleDialogFragment", "Calling showScoreDialog with score: " + earnedScore);
+                showScoreDialog(earnedScore); // Gọi dialog điểm số
+                dismiss(); // Đóng dialog câu hỏi
             } else {
                 Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
                 dismiss();
             }
-
         });
-
-
         // Sự kiện click cho nút Bỏ qua
         btnSkip.setOnClickListener(v ->dismiss());
-
         builder.setView(view);
         return builder.create();
-    }
-    public void setCurrentPuzzle(Puzzle puzzle) {
-        this.currentPuzzle = puzzle;
     }
 
     private void showScoreDialog(int earnedScore){
@@ -173,18 +167,16 @@ public class PuzzleDialogFragment extends DialogFragment {
                         // Lấy điểm hiện tại hoặc gán giá trị mặc định là 0
                         int currentScore = user.getScore() != 0 ? user.getScore() : 0;
                         int newScore = currentScore + earnedScore;
-
-                        // Cập nhật điểm mới cho user
-                        user.setScore(newScore);
-                        userRef.setValue(user) // Cập nhật Firebase
-                                .addOnSuccessListener(aVoid -> {
-                                    if (scoreUpdateListener != null) {
-                                        scoreUpdateListener.onScoreUpdated(newScore); // Gọi listener nếu có
-                                    }
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e("FirebaseError", "Failed to update score: " + e.getMessage());
-                                });
+                        Map<String, Object> updates = new HashMap<>();
+                            updates.put("score", newScore);
+                            userRef.updateChildren(updates, (error, ref) -> {
+                                if (error == null) {
+                                    Log.d("LocationFragment", "Score updated successfully");
+                                } else {
+                                    Log.e("LocationFragment", "Failed to update score", error.toException());
+                                    Toast.makeText(getActivity(), "Failed to update score: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                                }
+                            });
                     } else {
                         Log.e("FirebaseError", "Đối tượng user null");
                     }
@@ -195,7 +187,7 @@ public class PuzzleDialogFragment extends DialogFragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("FirebaseError", error.getMessage());
             }
         });
 

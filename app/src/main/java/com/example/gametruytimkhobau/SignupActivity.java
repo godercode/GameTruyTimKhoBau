@@ -90,14 +90,12 @@ public class SignupActivity extends AppCompatActivity {
 
                         //Xong là gọi intent chuyển sang cho log vào
                         Log.d("Signup", "createUserWithEmail: success");
-                        Toast.makeText(SignupActivity.this, "Welcome " + email, Toast.LENGTH_LONG).show();
                         startActivity(new Intent(SignupActivity.this, LoginActivity.class));
                         finishAffinity();
                     //Tạo thất bại nhảy vào đây
                     } else {
-                        Log.d("Signup", "createUserWithEmail: failure", task.getException());
+                        Log.e("Signup", "createUserWithEmail: failure", task.getException());
                         progressBar.setVisibility(View.GONE);
-                        Toast.makeText(SignupActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                 }
         });
     }
@@ -110,7 +108,6 @@ public class SignupActivity extends AppCompatActivity {
                 Log.d("Signup", "putDataUserToFirebase: Success");
             } else {
                 Log.e("Signup", "putDataUserToFirebase: Failure", error.toException());
-                Toast.makeText(SignupActivity.this, "Failed to save user data: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }

@@ -12,6 +12,8 @@ public class Puzzle implements Serializable {
     private int point;
     private List<String> options;
 
+    public Puzzle() {
+    }
 
     public Puzzle(int puzzle_id, String question, int correctAnswer, List<String> options, int point) {
         this.puzzle_id = puzzle_id;
@@ -44,8 +46,5 @@ public class Puzzle implements Serializable {
     public int getPoint(){
         return point;
     }
-
-
-
 
 }
