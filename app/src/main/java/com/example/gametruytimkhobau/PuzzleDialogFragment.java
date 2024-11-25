@@ -2,6 +2,7 @@ package com.example.gametruytimkhobau;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -45,6 +46,23 @@ public class PuzzleDialogFragment extends DialogFragment {
     private Puzzle currentPuzzle;//câu đố hiện tại
     private Marker closestMarker;
     private OnScoreUpdateListener scoreUpdateListener;
+    private DialogInterface.OnDismissListener onDismissListener;
+
+    public void setOnDismissListener(DialogInterface.OnDismissListener listener) {
+        this.onDismissListener = listener;
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        if (onDismissListener != null) {
+            onDismissListener.onDismiss(dialog);
+        }
+    }
+
+    // Flag xác định câu đố đã được giải đúng
+    private boolean puzzleSolved = false;
+
 
 
     public interface OnScoreUpdateListener{
@@ -54,6 +72,12 @@ public class PuzzleDialogFragment extends DialogFragment {
         this.currentPuzzle = puzzle;
         this.closestMarker = marker;
     }
+
+    // Trả về trạng thái giải câu đố
+    public boolean isPuzzleSolved() {
+        return puzzleSolved;
+    }
+
     @SuppressLint("MissingInflatedId")
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -88,10 +112,10 @@ public class PuzzleDialogFragment extends DialogFragment {
             @Override
             public void onClick(View v) {
                 if (selectedButton != null) {
-                    selectedButton.setBackgroundColor(Color.parseColor("#FFCDD2"));  // reset màu của button trước
+                    selectedButton.setBackgroundColor(Color.parseColor("#FFCDD2"));
                 }
                 selectedButton = (Button) v;
-                selectedButton.setBackgroundColor(Color.YELLOW);  // đổi màu khi button được chọn
+                selectedButton.setBackgroundColor(Color.YELLOW);
             }
         };
         // gán sự kiện click cho từng đáp án
@@ -112,18 +136,40 @@ public class PuzzleDialogFragment extends DialogFragment {
             Log.d("PuzzleDialogFragment", "Correct index: " + correctAnswerIndex);
 
             if (selectedAnswerIndex == correctAnswerIndex) {
+                puzzleSolved = true; // Đánh dấu câu đố đã giải
+                // Kiểm tra marker và cập nhật trạng thái kho báu
+                if (closestMarker != null && closestMarker.getTag() instanceof Treasure) {
+                    Treasure treasure = (Treasure) closestMarker.getTag();
+
+                    DatabaseReference treasureRef = FirebaseDatabase.getInstance().getReference("treasures")
+                            .child(String.valueOf(treasure.getId()));
+
+                    treasureRef.child("status").setValue(false)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("PuzzleDialogFragment", "Treasure collected: " + treasure.getTreasureName());
+
+                                // Xóa Marker khỏi bản đồ
+                                if (closestMarker != null) {
+                                    closestMarker.remove();
+                                }
+                            })
+                            .addOnFailureListener(e -> Log.e("PuzzleDialogFragment", "Error updating treasure status", e));
+                }
+                else {
+                    Log.e("PuzzleDialogFragment", "Null marker or Treasure to update");
+                }
+
                 int earnedScore = currentPuzzle.getPoint(); // Điểm của câu hỏi
-                closestMarker.remove(); // Loại bỏ marker trên bản đồ
+//                closestMarker.remove();
 
                 Log.d("PuzzleDialogFragment", "Calling showScoreDialog with score: " + earnedScore);
-                showScoreDialog(earnedScore); // Gọi dialog điểm số
-                dismiss(); // Đóng dialog câu hỏi
+                showScoreDialog(earnedScore);
+                dismiss();
             } else {
                 Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
                 dismiss();
             }
         });
-        // Sự kiện click cho nút Bỏ qua
         btnSkip.setOnClickListener(v ->dismiss());
         builder.setView(view);
         return builder.create();
@@ -131,7 +177,6 @@ public class PuzzleDialogFragment extends DialogFragment {
 
     private void showScoreDialog(int earnedScore){
         if (getContext() != null && isAdded()) {
-            //Đảm bảo fragment hiện đang được liên kết với một context hợp lệ (thường là Activity) và đã được thêm vào giao diện người dùng.
             Dialog dialog = new Dialog(getContext(), R.style.TransparentDialog);
             dialog.setContentView(R.layout.dialog_correct_notification);
             dialog.setCancelable(false);
@@ -148,7 +193,6 @@ public class PuzzleDialogFragment extends DialogFragment {
         }
     }
 
-    // Cập nhâật điểm vào firebase sau khi được cộng thêm điểm
     private void UpdateScoreFirebase(int earnedScore){
         mDatabase = FirebaseDatabase.getInstance();
         //Lấy ra user hiện tại thông qua FAuth
@@ -205,6 +249,6 @@ public class PuzzleDialogFragment extends DialogFragment {
         } else if (selectedButton == answer4) {
             return 3;
         }
-        return -1;  // Không có đáp án nào được chọn
+        return -1;
     }
 }
