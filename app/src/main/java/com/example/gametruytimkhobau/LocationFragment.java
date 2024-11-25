@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -187,54 +189,82 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
     }
 
     private void findNearbyTreasure() {
-        if (currentLocation != null) {
-            // Lấy kho báu gần nhất
-            closestMarker = treasureManager.getNearbyTreasureMarker(currentLocation);
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Yêu cầu quyền truy cập vị trí nếu chưa được cấp
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            return;
+        }
 
-            // Kiểm tra khoảng cách 50 mét
-            if (closestMarker != null && treasureManager.isWithinDistance(currentLocation, closestMarker, 50)) {
-                String treasureTitle = closestMarker.getTitle();
-                Toast.makeText(getActivity(), "Bạn đã tìm thấy " + treasureTitle, Toast.LENGTH_SHORT).show();
-                showRandomPuzzleDialog(); // Hiển thị câu hỏi, xử lý marker tại đây
-            } else {
-                // Hiển thị thông tin về kho báu gần nhất nếu không nằm trong 50m
-                if (closestMarker != null) {
-                    float[] results = new float[1];
-                    android.location.Location.distanceBetween(
-                            currentLocation.latitude, currentLocation.longitude,
-                            closestMarker.getPosition().latitude, closestMarker.getPosition().longitude,
-                            results
-                    );
+        // Kiểm tra nếu vị trí ok
+        if (currentLocation == null) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null) {
+                    // Cập nhật vị trí hiện tại
+                    currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                    Log.d("LocationFragment", "Success Update Location: " + currentLocation);
 
-                    TreasureInfoFragment treasureInfoFragment = TreasureInfoFragment.newInstance(
-                            closestMarker.getTitle(),
-                            results[0],
-                            currentLocation
-                    );
-
-                    getParentFragmentManager().beginTransaction()
-                            .replace(R.id.info_fragment_container, treasureInfoFragment)
-                            .addToBackStack(null)
-                            .commit();
-
-                    View infoFragmentContainer = getActivity().findViewById(R.id.info_fragment_container);
-                    if (infoFragmentContainer != null) {
-                        infoFragmentContainer.setVisibility(View.VISIBLE);
-                    }
+                    // Tiếp tục tìm kho báu sau khi cập nhật vị trí
+                    findTreasureAfterLocationUpdate();
                 } else {
-                    Toast.makeText(getActivity(), "Khoảng cách của bạn quá xa, hãy lại gần thêm", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Không thể xác định vị trí hiện tại!", Toast.LENGTH_SHORT).show();
                 }
-            }
+            }).addOnFailureListener(e -> {
+                Log.e("LocationFragment", "Error getting location: " + e.getMessage());
+                Toast.makeText(getActivity(), "Lỗi khi lấy vị trí hiện tại!", Toast.LENGTH_SHORT).show();
+            });
         } else {
-            Toast.makeText(getActivity(), "Chưa xác định được vị trí hiện tại!", Toast.LENGTH_SHORT).show();
+            // Nếu vị trí hiện tại ok thì tiếp tục tìm kho báu gần
+            findTreasureAfterLocationUpdate();
         }
     }
+
+    private void findTreasureAfterLocationUpdate() {
+        closestMarker = treasureManager.getNearbyTreasureMarker(currentLocation);
+
+        if (closestMarker != null) {
+            // Này tính khoảng cách đến kho báu gần nhất
+            float[] results = new float[1];
+            android.location.Location.distanceBetween(
+                    currentLocation.latitude, currentLocation.longitude,
+                    closestMarker.getPosition().latitude, closestMarker.getPosition().longitude,
+                    results
+            );
+
+            float distanceToTreasure = results[0]; // Khoảng cách từ người chơi đến kho báu
+
+            TreasureInfoFragment treasureInfoFragment = TreasureInfoFragment.newInstance(
+                    closestMarker.getTitle(),
+                    distanceToTreasure,
+                    currentLocation,
+                    closestMarker
+            );
+
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.info_fragment_container, treasureInfoFragment)
+                    .addToBackStack(null)
+                    .commit();
+//            hideFindTreasureButton();
+            View infoFragmentContainer = getActivity().findViewById(R.id.info_fragment_container);
+            if (infoFragmentContainer != null) {
+                infoFragmentContainer.setVisibility(View.VISIBLE);
+            }
+
+            Toast.makeText(getActivity(), "Kho báu gần nhất cách bạn "+ Math.round(distanceToTreasure)+ "m", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getActivity(), "Không tìm thấy kho báu nào gần bạn.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
         LocationRequest locationRequest = LocationRequest.create()
-                .setInterval(2000)
-                .setFastestInterval(1000)
+                .setInterval(5000)
+                .setFastestInterval(2000)
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         LocationCallback locationCallback = new LocationCallback() {
@@ -271,83 +301,70 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
 
-        // Kiểm tra và yêu cầu quyền truy cập vị trí nếu chưa được cấp
+        // Khởi tạo và đồng bộ dữ liệu kho báu leen fbase laji đẻ nhiều máy cùng update
+        treasureManager.pushDataToFBase(
+                map,
+                BitmapFactory.decodeResource(getResources(), R.drawable.pngkhobau)
+        );
+
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
 
-//            // Nút My Location và la bàn
-//            map.getUiSettings().setMyLocationButtonEnabled(true);
-//            map.getUiSettings().setCompassEnabled(true);
-//            map.getUiSettings().setMapToolbarEnabled(true);
+            // get ra vị trí hiện tại
+            fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null) {
+                    currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
+                } else {
+                    Log.e("LocationFragment", "Error Location.");
+                    Toast.makeText(getActivity(), "Vị trí hiện tại chưa sẵn sàng. Vui lòng thử lại sau!", Toast.LENGTH_SHORT).show();
+                }
+            }).addOnFailureListener(e -> {
+                Log.e("LocationFragment", "Error getting Location " + e.getMessage());
+                Toast.makeText(getActivity(), "Không thể lấy vị trí hiện tại!", Toast.LENGTH_SHORT).show();
+            });
 
+            // update vị trí liên tục
             startLocationUpdates();
 
-            LocationCallback locationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    if (locationResult == null) {
-                        return;
-                    }
-
-                    for (Location location : locationResult.getLocations()) {
-                        currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                        treasureManager.createTreasureLocations(map, currentLocation, LocationFragment.this);
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
-                    }
-                }
-            };
-
-            fusedLocationClient.requestLocationUpdates(LocationRequest.create(), locationCallback, null);
         } else {
             ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
 
-        // nhấn vào kho baus
+        // btn marker kho báu
         map.setOnMarkerClickListener(marker -> {
-            selectedTreasureMarker = marker;  // Đánh dấu kho báu được chọn
+            selectedTreasureMarker = marker;
 
-            // Tính khoảng cách từ vị trí hiện tại đến kho báu
-            float[] results = new float[1];
-            Location.distanceBetween(
-                    currentLocation.latitude, currentLocation.longitude,
-                    marker.getPosition().latitude, marker.getPosition().longitude,
-                    results
-            );
-            float distanceInMeters = results[0];
+            if (currentLocation != null) {
+                // Tính khoảng cách từ vị trí hiện tại đến marker
+                float[] results = new float[1];
+                Location.distanceBetween(
+                        currentLocation.latitude, currentLocation.longitude,
+                        marker.getPosition().latitude, marker.getPosition().longitude,
+                        results
+                );
+                float distanceInMeters = results[0];
 
-            // Hiển thị thông tin chi tiết kho báu bằng Fragment
-            showTreasureInfo(marker, distanceInMeters);
+                showTreasureInfo(marker, distanceInMeters);
+            } else {
+                Toast.makeText(getActivity(), "Không xác định được vị trí hiện tại.", Toast.LENGTH_SHORT).show();
+            }
             return false;
         });
 
         map.setOnMapClickListener(latLng -> hideTreasureInfo());
     }
 
+
+
+
     private void showTreasureInfo(Marker marker, float distanceInMeters) {
         String title = marker.getTitle();
         float distance = distanceInMeters;
 
-        TreasureInfoFragment treasureInfoFragment = TreasureInfoFragment.newInstance(title, distance, currentLocation);
+        TreasureInfoFragment treasureInfoFragment = TreasureInfoFragment.newInstance(title, distance, currentLocation, marker);
         hideFindTreasureButton();
-
-        treasureInfoFragment.setOnTreasureFoundListener(() -> {
-            if (selectedTreasureMarker != null) {
-                treasureManager.collectTreasure(selectedTreasureMarker);
-                selectedTreasureMarker.remove();
-                selectedTreasureMarker = null;
-            } else {
-                Marker closestMarker = treasureManager.getNearbyTreasureMarker(currentLocation);
-                if (closestMarker != null && treasureManager.isWithinDistance(currentLocation, closestMarker, 50)) {
-                    treasureManager.collectTreasure(closestMarker);
-                    closestMarker.remove();
-                    Toast.makeText(getActivity(), "Chúc mừng, bạn đã tìm thấy kho báu " + title + " cách bạn " + Math.round(distance) + "m", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getActivity(), "Không có kho báu nào ở cách bạn 50m!", Toast.LENGTH_SHORT).show();
-                }
-            }
-            hideTreasureInfo();
-        });
 
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.info_fragment_container, treasureInfoFragment)
