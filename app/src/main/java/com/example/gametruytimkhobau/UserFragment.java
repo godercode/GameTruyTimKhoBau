@@ -104,16 +104,19 @@ public class UserFragment extends Fragment {
         mReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Chuyển dữ liệu về đối tượng User
+                if (snapshot.exists() && isAdded()) { // Ensure the fragment is attached
                     User user = snapshot.getValue(User.class);
                     if (user != null) {
                         tvUsername.setText(user.getUserName());
-                        Glide.with(getActivity()).load(user.getAvatar()).error(R.drawable.ic_user).into(imgUserAvatar);
+                        Glide.with(requireContext())
+                                .load(user.getAvatar())
+                                .error(R.drawable.ic_user)
+                                .into(imgUserAvatar);
                     }
+                } else if (!isAdded()) {
+                    Log.w("UserFragment", "Fragment not attached, skipping Glide call.");
                 } else {
                     Log.d("Firebase", "User not found");
-
                 }
             }
             @Override

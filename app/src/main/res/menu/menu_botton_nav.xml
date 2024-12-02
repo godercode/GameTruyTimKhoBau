@@ -15,7 +15,4 @@
     <item android:id="@+id/action_progress"
         android:title="@string/action_progress"
         android:icon="@drawable/ic_progress"/>
-    <item android:id="@+id/action_more"
-        android:title="@string/action_more"
-        android:icon="@drawable/ic_more"/>
 </menu>
