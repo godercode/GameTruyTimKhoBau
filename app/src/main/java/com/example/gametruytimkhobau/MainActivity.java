@@ -46,10 +46,7 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = new LocationFragment();
             } else if (menuItem.getItemId() == R.id.action_progress) {
                 selectedFragment = new ProgressFragment();
-            } else if (menuItem.getItemId() == R.id.action_more) {
-                selectedFragment = new MoreFragment();
             }
-
             if (menuItem.getItemId() != R.id.action_location) {
                 hideTreasureInfoFragment();
             }

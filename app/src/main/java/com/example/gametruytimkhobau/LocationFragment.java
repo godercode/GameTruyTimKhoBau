@@ -41,7 +41,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LocationFragment extends Fragment implements OnMapReadyCallback, PuzzleDialogFragment.OnScoreUpdateListener {
     private static final String TAG = "LocationFragment";
@@ -103,7 +105,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
 
     private void loadInitialData() {
         if (puzzleManager != null) {
-            puzzleManager.pushPuzzlesDataToFirebase();
+            //puzzleManager.pushPuzzlesDataToFirebase();
             fetchPuzzlesDataFromFirebase();
         }
         getScoreFromFirebase();
@@ -203,7 +205,7 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
                     // Cập nhật vị trí hiện tại
                     currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     Log.d("LocationFragment", "Success Update Location: " + currentLocation);
-
+                    updateCurrentLocationToFirebase(currentLocation);
                     // Tiếp tục tìm kho báu sau khi cập nhật vị trí
                     findTreasureAfterLocationUpdate();
                 } else {
@@ -216,9 +218,40 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
         } else {
             // Nếu vị trí hiện tại ok thì tiếp tục tìm kho báu gần
             findTreasureAfterLocationUpdate();
+            updateCurrentLocationToFirebase(currentLocation);
         }
     }
 
+    private void updateCurrentLocationToFirebase(LatLng currentLocation) {
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    User user = snapshot.getValue(User.class);
+                    if (user != null) {
+                        double latitude = currentLocation.latitude;
+                        double longitude = currentLocation.longitude;
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("latitude", latitude);
+                        updates.put("longitude", longitude);
+                        userRef.updateChildren(updates, (error, ref) -> {
+                            if (error == null) {
+                                Log.d("LocationFragment", "Location updated successfully");
+                            } else {
+                                Log.e("LocationFragment", "Failed to update Location", error.toException());
+                            }
+                        });
+                    } else {
+                        Log.e("LocationFragment", "Đối tượng user null");
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("LocationFragment", "Database error: " + error.getMessage());
+            }
+        });
+    }
     private void findTreasureAfterLocationUpdate() {
         closestMarker = treasureManager.getNearbyTreasureMarker(currentLocation);
 
@@ -318,11 +351,11 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
                 } else {
                     Log.e("LocationFragment", "Error Location.");
-                    Toast.makeText(getActivity(), "Vị trí hiện tại chưa sẵn sàng. Vui lòng thử lại sau!", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getActivity(), "Vị trí hiện tại chưa sẵn sàng. Vui lòng thử lại sau!", Toast.LENGTH_SHORT).show();
                 }
             }).addOnFailureListener(e -> {
                 Log.e("LocationFragment", "Error getting Location " + e.getMessage());
-                Toast.makeText(getActivity(), "Không thể lấy vị trí hiện tại!", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getActivity(), "Không thể lấy vị trí hiện tại!", Toast.LENGTH_SHORT).show();
             });
 
             // update vị trí liên tục
@@ -355,10 +388,6 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
 
         map.setOnMapClickListener(latLng -> hideTreasureInfo());
     }
-
-
-
-
     private void showTreasureInfo(Marker marker, float distanceInMeters) {
         String title = marker.getTitle();
         float distance = distanceInMeters;

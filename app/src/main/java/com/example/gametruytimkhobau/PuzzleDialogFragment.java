@@ -193,7 +193,7 @@ public class PuzzleDialogFragment extends DialogFragment {
         }
     }
 
-    private void UpdateScoreFirebase(int earnedScore){
+    public void UpdateScoreFirebase(int earnedScore){
         mDatabase = FirebaseDatabase.getInstance();
         //Lấy ra user hiện tại thông qua FAuth
         mAuth = FirebaseAuth.getInstance();
