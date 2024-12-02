@@ -113,7 +113,6 @@ public class TreasureInfoFragment extends Fragment {
                     if (puzzleDialog.isPuzzleSolved()) {
                         // Cập nhật điểm số
                         int earnedScore = randomPuzzle.getPoint();
-                        updateScoreToFirebase(earnedScore);
 
                         Toast.makeText(getActivity(), "Chúc mừng! Bạn đã thu thập được kho báu.", Toast.LENGTH_SHORT).show();
 
