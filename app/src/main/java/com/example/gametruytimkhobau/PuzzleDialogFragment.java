@@ -31,6 +31,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PuzzleDialogFragment extends DialogFragment {
@@ -44,6 +45,7 @@ public class PuzzleDialogFragment extends DialogFragment {
     private Button selectedButton = null;  // Button đã được chọn
     private int correctAnswerIndex = 0;  // Chỉ số đáp án đúng (bắt đầu từ 0)
     private Puzzle currentPuzzle;//câu đố hiện tại
+    private List<Task> mTaskList;
     private Marker closestMarker;
     private OnScoreUpdateListener scoreUpdateListener;
     private DialogInterface.OnDismissListener onDismissListener;
@@ -84,7 +86,10 @@ public class PuzzleDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.fragment_puzzle_dialog, null);
-
+        //Khởi tạo user
+        mAuth = FirebaseAuth.getInstance();
+        mUser = mAuth.getCurrentUser();
+        userId = mUser.getUid();
         // khởi tạo các thành phần câu đố
         questionText = view.findViewById(R.id.tvQuestion);
         answer1 = view.findViewById(R.id.btnAnswer1);
@@ -94,6 +99,7 @@ public class PuzzleDialogFragment extends DialogFragment {
         btnSubmit = view.findViewById(R.id.btnSubmit);
         btnSkip = view.findViewById(R.id.btnSkip);
 
+        getTaskFromFBase();
 
         if (currentPuzzle != null) {
             // gán câu hỏi và đáp án vào các button
@@ -102,9 +108,13 @@ public class PuzzleDialogFragment extends DialogFragment {
             answer2.setText(currentPuzzle.getOptions().get(1));
             answer3.setText(currentPuzzle.getOptions().get(2));
             answer4.setText(currentPuzzle.getOptions().get(3));
-
+            Log.d("PuzzleDialogFrangemt", "Answer1: "+currentPuzzle.getOptions().get(0));
+            Log.d("PuzzleDialogFrangemt", "Answer2: "+currentPuzzle.getOptions().get(1));
+            Log.d("PuzzleDialogFrangemt", "Answer3: "+currentPuzzle.getOptions().get(2));
+            Log.d("PuzzleDialogFrangemt", "Answer4: "+currentPuzzle.getOptions().get(3));
             // lưu chỉ số đáp án đúng
             correctAnswerIndex = currentPuzzle.getCorrectAnswer();
+            Log.d("PuzzleDialogFrangemt", "Correct: "+currentPuzzle.getOptions().get(correctAnswerIndex));
         }
 
         // lắng nghe sự kiện click cho từng đáp án
@@ -142,20 +152,34 @@ public class PuzzleDialogFragment extends DialogFragment {
                 // Kiểm tra marker và cập nhật trạng thái kho báu
                 if (closestMarker != null && closestMarker.getTag() instanceof Treasure) {
                     Treasure treasure = (Treasure) closestMarker.getTag();
-
+                    //cập nhật trạng thái cho Task
+                    int treasureId = treasure.getId();
+                    String taskId;
+                    Task task = findTaskByTreasureId(mTaskList, treasureId);
+                    taskId = task.getTaskId();
+                    updateStatusTask(userId, taskId);
+                    ///Cập nhật trạng thái cho Treasure
                     DatabaseReference treasureRef = FirebaseDatabase.getInstance().getReference("treasures")
-                            .child(String.valueOf(treasure.getId()));
+                            .child(String.valueOf(treasureId));  // Truy cập đúng treasure bằng ID
+                    if (userId != null && !userId.isEmpty()) {
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("status", false);  // Cập nhật status (có thể là true nếu đã hoàn thành)
+                        updates.put("userId", userId); // Thêm userId vào dữ liệu
 
-                    treasureRef.child("status").setValue(false)
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d("PuzzleDialogFragment", "Treasure collected: " + treasure.getTreasureName());
-
-                                // Xóa Marker khỏi bản đồ
-                                if (closestMarker != null) {
-                                    closestMarker.remove();
-                                }
-                            })
-                            .addOnFailureListener(e -> Log.e("PuzzleDialogFragment", "Error updating treasure status", e));
+                        treasureRef.updateChildren(updates)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("PuzzleDialogFragment", "Treasure collected: " + treasure.getTreasureName());
+                                    // Xóa Marker khỏi bản đồ nếu có
+                                    if (closestMarker != null) {
+                                        closestMarker.remove();
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("PuzzleDialogFragment", "Error updating treasure status", e);
+                                });
+                    } else {
+                        Log.e("PuzzleDialogFragment", "userId is null or empty, cannot update treasure.");
+                    }
                 }
                 else {
                     Log.e("PuzzleDialogFragment", "Null marker or Treasure to update");
@@ -177,6 +201,42 @@ public class PuzzleDialogFragment extends DialogFragment {
         return builder.create();
     }
 
+    private void updateStatusTask(String userId, String taskId) {
+        // Tham chiếu trực tiếp đến nhiệm vụ của người dùng cụ thể
+        DatabaseReference taskRef = FirebaseDatabase.getInstance().getReference("tasks").child(userId).child(taskId);
+
+        // Cập nhật "status" trực tiếp mà không duyệt qua các child
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", false);
+
+        taskRef.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> Log.d("UpdateStatusTask", "Task status updated successfully!"))
+                .addOnFailureListener(e -> Log.e("UpdateStatusTask", "Error updating task status", e));
+    }
+    private void getTaskFromFBase(){
+        TaskManager taskManager = new TaskManager();
+        taskManager.fetchTasksFromFirebase(new TaskManager.OnTasksLoadedListener() {
+            @Override
+            public void onTasksLoaded(boolean success, List<Task> tasks) {
+                mTaskList = tasks;
+            }
+        });
+    }
+    public Task findTaskByTreasureId(List<Task> taskList, int treasureId) {
+        if(taskList != null) {
+            for (Task task : taskList) {
+                if (task.getTreasure_id() == treasureId) { // So sánh id
+                    return task; // Trả về đối tượng tìm thấy
+                }
+            }
+            Log.e("PuzzleDialogFragment", "Task with treasure id " + treasureId + " not found in list.");
+            return null;
+        }
+        else{
+            Log.e("PuzzleDialogFragment","task list null");
+            return null;
+        }
+    }
     private void showScoreDialog(int earnedScore){
         if (getContext() != null && isAdded()) {
             Dialog dialog = new Dialog(getContext(), R.style.TransparentDialog);

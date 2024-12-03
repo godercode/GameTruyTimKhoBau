@@ -2,6 +2,7 @@ package com.example.gametruytimkhobau;
 
 public class Treasure {
     private int treasure_id;
+    private String userId;
     private String treasure_name;
     private boolean status;
     private double latitude;
@@ -16,6 +17,14 @@ public class Treasure {
         this.status = status;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public int getId() {return treasure_id;}

@@ -429,7 +429,6 @@ public class LocationFragment extends Fragment implements OnMapReadyCallback, Pu
             Toast.makeText(getActivity(), "Lỗi truy cập", Toast.LENGTH_SHORT).show();
         }
     }
-
     @Override
     public void onScoreUpdated(int newScore) {
         if (btnShowScore != null) {

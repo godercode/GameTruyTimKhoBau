@@ -76,7 +76,7 @@ public class TaskManager {
                     List<TreasureDistance> treasureDistances = new ArrayList<>();
                     for (DataSnapshot treasureSnapshot : snapshot.getChildren()) {
                         Treasure treasure = treasureSnapshot.getValue(Treasure.class);
-                        if (treasure != null) {
+                        if (treasure != null && treasure.isStatus()) {
                             double treasureLat = treasure.getLatitude();
                             double treasureLng = treasure.getLongitude();
                             float[] results = new float[1];
@@ -173,28 +173,29 @@ public class TaskManager {
                 String lastTaskDate = snapshot.getValue(String.class);
                 String currentDate = getCurrentDate();
 
-                if (lastTaskDate == null || !lastTaskDate.equals(currentDate)) {
-                    // Xóa toàn bộ nhiệm vụ cũ
-                    deleteAllTasks(() -> {
-                        // Tạo và đẩy nhiệm vụ mới
-                        getTreasureNearUser(10, (treasuresLoaded, treasures) -> {
-                            if (treasuresLoaded) {
-                                createListTask();
-                                pushListTaskToFirebase(() -> {
-                                    // Cập nhật ngày tạo nhiệm vụ
-                                    mRefLastTaskTime.setValue(currentDate);
-                                    fetchTasksFromFirebase(listener);
-                                });
-                            } else {
-                                Log.d("TaskManager", "No treasures found to create tasks.");
-                                listener.onTasksLoaded(false, null);
-                            }
-                        });
-                    });
-                } else {
-                    // Trả về danh sách nhiệm vụ hiện tại nếu không cần tạo mới
-                    fetchTasksFromFirebase(listener);
+                // Nếu ngày cuối cùng tạo nhiệm vụ trùng với ngày hiện tại
+                if (lastTaskDate != null && lastTaskDate.equals(currentDate)) {
+                    Log.d("TaskManager", "Tasks for today already created. Fetching existing tasks.");
+                    fetchTasksFromFirebase(listener); // Tải lại nhiệm vụ hiện tại
+                    return; // Không tạo nhiệm vụ mới
                 }
+
+                // Xóa nhiệm vụ cũ và tạo mới
+                deleteAllTasks(() -> {
+                    getTreasureNearUser(10, (treasuresLoaded, treasures) -> {
+                        if (treasuresLoaded) {
+                            createListTask();
+                            pushListTaskToFirebase(() -> {
+                                // Cập nhật ngày tạo nhiệm vụ
+                                mRefLastTaskTime.setValue(currentDate);
+                                fetchTasksFromFirebase(listener); // Lấy danh sách nhiệm vụ mới
+                            });
+                        } else {
+                            Log.d("TaskManager", "No treasures found to create tasks.");
+                            listener.onTasksLoaded(false, null);
+                        }
+                    });
+                });
             }
 
             @Override
@@ -204,6 +205,7 @@ public class TaskManager {
             }
         });
     }
+
 
     private void deleteAllTasks(OnCompleteListener onCompleteListener) {
         if (mRefTasks == null) return;
