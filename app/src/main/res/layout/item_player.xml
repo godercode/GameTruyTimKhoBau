@@ -16,7 +16,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:padding="10dp"
-            android:textColor="@color/black"
+            android:textColor="@color/brown"
             android:text="1"
             />
         <de.hdodenhof.circleimageview.CircleImageView
@@ -25,31 +25,31 @@
             android:layout_height="50dp"
             android:layout_toEndOf="@id/tv_rank"
             android:src="@drawable/ic_user"/>
+
         <TextView
             android:id="@+id/tv_player"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:layout_toEndOf="@id/img_player"
             android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
+            android:layout_toEndOf="@id/img_player"
+            android:padding="10dp"
             android:text="@string/app_username"
-            />
+            android:textColor="@color/brown"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
         <TextView
             android:id="@+id/tv_score"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:layout_toEndOf="@id/tv_player"
             android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
+            android:layout_toEndOf="@id/tv_player"
+            android:padding="10dp"
             android:text="1000"
-            />
+            android:textColor="@color/brown"
+            android:textSize="16sp"
+            android:textStyle="bold" />
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

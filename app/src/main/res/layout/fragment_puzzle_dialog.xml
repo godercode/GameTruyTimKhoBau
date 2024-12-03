@@ -7,7 +7,7 @@
     android:layout_marginVertical="150dp"
     android:gravity="center"
     android:layout_marginHorizontal="60dp"
-    android:background="#FFF8E1">
+    android:background="@drawable/round_corner">
 
 
     <ImageView

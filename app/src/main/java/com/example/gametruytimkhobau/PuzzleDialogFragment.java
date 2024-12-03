@@ -113,9 +113,11 @@ public class PuzzleDialogFragment extends DialogFragment {
             public void onClick(View v) {
                 if (selectedButton != null) {
                     selectedButton.setBackgroundColor(Color.parseColor("#FFCDD2"));
+                    selectedButton.setTextColor(Color.BLACK);
                 }
                 selectedButton = (Button) v;
-                selectedButton.setBackgroundColor(Color.YELLOW);
+                selectedButton.setBackgroundColor(getResources().getColor(R.color.brown));
+                selectedButton.setTextColor(Color.WHITE);
             }
         };
         // gán sự kiện click cho từng đáp án
@@ -166,7 +168,7 @@ public class PuzzleDialogFragment extends DialogFragment {
                 showScoreDialog(earnedScore);
                 dismiss();
             } else {
-                Toast.makeText(getActivity(), "Sai rồi! Thử lại với một câu hỏi khác.", Toast.LENGTH_SHORT).show();
+                showWrongDialog();
                 dismiss();
             }
         });
@@ -235,6 +237,22 @@ public class PuzzleDialogFragment extends DialogFragment {
             }
         });
 
+    }
+
+    private void showWrongDialog() {
+        if (getContext() != null && isAdded()) {
+            Dialog dialog = new Dialog(getContext(), R.style.TransparentDialog);
+            dialog.setContentView(R.layout.dialog_wrong_notification);
+            dialog.setCancelable(false);
+
+            Button btnTryAgain = dialog.findViewById(R.id.btn_try_again);
+
+            btnTryAgain.setOnClickListener(v -> {
+                dialog.dismiss();
+            });
+
+            dialog.show();
+        }
     }
 
 
