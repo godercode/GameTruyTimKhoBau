@@ -28,11 +28,12 @@ import java.util.Random;
 public class TreasureManager {
     private List<Marker> treasureMarkers = new ArrayList<>();
     private FirebaseDatabase mDatabase;
-    private DatabaseReference mReference;
+    private DatabaseReference mReference, mTreasureRef;
 
     public TreasureManager() {
         mDatabase = FirebaseDatabase.getInstance();
         mReference = mDatabase.getReference("puzzles");
+        mTreasureRef = mDatabase.getReference("treasures");
     }
 
     public Bitmap resizeBitmap(Bitmap bitmap, int width, int height) {
@@ -299,7 +300,31 @@ public class TreasureManager {
         );
         return results[0] <= distance;
     }
-
+    public void getAllTresureFromFbase(final TreasureDataCallback callback){
+        mTreasureRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Treasure> treasureList = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Treasure treasure= snapshot.getValue(Treasure.class);
+                    if (treasure != null) {
+                        treasureList.add(treasure);
+                    }
+                }
+                // Trả kết quả qua callback
+                callback.onSuccess(treasureList);
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Trả lỗi qua callback
+                callback.onFailure(databaseError.toException());
+            }
+        });
+    }
+    public interface TreasureDataCallback {
+        void onSuccess(List<Treasure> treasureList);
+        void onFailure(Exception e);
+    }
     public List<Marker> getAllTreasures() {
         return treasureMarkers;
     }

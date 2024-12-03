@@ -22,6 +22,8 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
     private TaskAdapter taskAdapter;
     private  TaskManager taskManager;
     private BottomNavigationView bottomNavigationView;
+    private List<Treasure> mTreasureList;
+    private List<Task> mListTask;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -39,6 +41,8 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
         taskAdapter = new TaskAdapter(getActivity(), this);
         rcvTask.setAdapter(taskAdapter);
 
+        getTreasureList();
+
         taskManager = new TaskManager();
 
         // Kiểm tra và tạo nhiệm vụ hằng ngày
@@ -46,9 +50,10 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
             if (success) {
                 taskManager.handleDailyTaskCreation((tasksLoaded, tasks) -> {
                     if (tasksLoaded && tasks != null) {
+                            mListTask = tasks;
                         // Cập nhật dữ liệu vào RecyclerView
                         new Handler(Looper.getMainLooper()).post(() -> {
-                            taskAdapter.setData(tasks);
+                            taskAdapter.setData(mListTask, mTreasureList);
                         });
                     } else {
                         Log.d("ProgressFragment", "No tasks to display.");
@@ -89,7 +94,7 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
                         if (tasksLoaded && tasks != null) {
                             // Cập nhật lại dữ liệu vào RecyclerView
                             new Handler(Looper.getMainLooper()).post(() -> {
-                                taskAdapter.setData(tasks); // Cập nhật dữ liệu mới vào adapter
+                                taskAdapter.setData(tasks, mTreasureList); // Cập nhật dữ liệu mới vào adapter
                             });
                         } else {
                             Log.d("ProgressFragment", "No tasks to display.");
@@ -101,4 +106,23 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
             });
         });
     }
+    private void getTreasureList() {
+        TreasureManager treasureManager = new TreasureManager();
+        treasureManager.getAllTresureFromFbase(new TreasureManager.TreasureDataCallback() {
+            @Override
+            public void onSuccess(List<Treasure> treasureList) {
+                mTreasureList = treasureList;
+                for (Treasure treasure : treasureList) {
+                    Log.d("ProgressFragment", "Treasure ID: " + treasure.getId());
+                }
+                taskAdapter.setData(mListTask, mTreasureList);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.e("ProgressFragment", "Error fetching puzzles data: ", e);
+            }
+        });
+    }
+
 }
