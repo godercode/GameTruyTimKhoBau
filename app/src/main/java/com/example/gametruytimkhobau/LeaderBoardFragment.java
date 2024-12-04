@@ -137,7 +137,7 @@ public class LeaderBoardFragment extends Fragment implements PlayerAdapter.OnIte
         View view = getLayoutInflater().inflate(R.layout.dialog_player_details, null);
         builder.setView(view);
 
-        Log.d("LeaderBoard", user.getAvatar());
+        //Log.d("LeaderBoard", user.getAvatar());
 
         // Liên kết các View trong layout
         ImageView imgAvatar = view.findViewById(R.id.img_avatar);

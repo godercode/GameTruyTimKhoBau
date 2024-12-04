@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,6 +22,7 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
     private RecyclerView rcvTask;
     private TaskAdapter taskAdapter;
     private  TaskManager taskManager;
+    private Button btnGet;
     private BottomNavigationView bottomNavigationView;
     private List<Treasure> mTreasureList;
     private List<Task> mListTask;
@@ -34,6 +36,7 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
 
     private void initViews(View view) {
         rcvTask = view.findViewById(R.id.rcv_task);
+        btnGet = view.findViewById(R.id.btn_get);
         bottomNavigationView = getActivity().findViewById(R.id.bottom_nav);
         // Thiết lập LayoutManager cho RecyclerView
         rcvTask.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -82,11 +85,10 @@ public class ProgressFragment extends Fragment implements TaskAdapter.OnItemClic
         // Cập nhật điểm trong Firebase
         PuzzleDialogFragment puzzleDialogFragment = new PuzzleDialogFragment();
         puzzleDialogFragment.UpdateScoreFirebase(task.getPoint());
-
         // Xóa task
         taskManager.deleteTask(task.getTaskId(), () -> {
             Log.d("onGetButtonClick", "Task has been deleted: " + task.getTaskId());
-
+            //btnGet.setVisibility(View.GONE);
             // Sau khi xóa task, tải lại danh sách nhiệm vụ
             taskManager.getUserFromFirebase(success -> {
                 if (success) {
