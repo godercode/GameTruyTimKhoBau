@@ -219,7 +219,6 @@ public class PuzzleDialogFragment extends DialogFragment {
                 dismiss();
                 Log.d("PuzzleDialogFragment", "Calling showScoreDialog with score: " + earnedScore);
                 showScoreDialog(earnedScore);
-                dismiss();
             } else {
                 if (answerListener != null) {
                     answerListener.onAnswer(false); // Thông báo trả lời sai
@@ -286,6 +285,7 @@ public class PuzzleDialogFragment extends DialogFragment {
             btn_receive_score.setOnClickListener(v -> {
                 UpdateScoreFirebase(earnedScore);
                 dialog.dismiss();
+                dismiss();
             });
             dialog.show();
         }
