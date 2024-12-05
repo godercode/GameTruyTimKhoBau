@@ -1,6 +1,13 @@
 package com.example.gametruytimkhobau;
 
+import android.app.Dialog;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,16 +30,22 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TreasureInfoFragment extends Fragment {
+public class TreasureInfoFragment extends Fragment implements SensorEventListener,PuzzleDialogFragment.OnAnswerListener{
 
     private String title;
     private float distance;
     private LatLng currentLocation;
     private Marker selectedMarker;
     private TreasureManager treasureManager;
+
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private boolean isShaking = false;
+    private PuzzleDialogFragment puzzleDialog;
 
     public interface OnTreasureFoundListener {
         void onTreasureFound();
@@ -61,6 +74,12 @@ public class TreasureInfoFragment extends Fragment {
         View view = inflater.inflate(R.layout.layout_treasure_info, container, false);
         treasureManager = new TreasureManager();
 
+        sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        // Lắng nghe sự kiện lắc
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+
         if (getArguments() != null) {
             title = getArguments().getString("title");
             distance = getArguments().getFloat("distance");
@@ -85,54 +104,146 @@ public class TreasureInfoFragment extends Fragment {
                 return;
             }
 
-            showRandomPuzzleDialog();
+            getRandomPuzzle();
         });
 
         return view;
     }
 
-    private void showRandomPuzzleDialog() {
-        PuzzleManager puzzleManager = new PuzzleManager();
-        puzzleManager.getPuzzlesData(new PuzzleManager.PuzzlesDataCallback() {
-            @Override
-            public void onSuccess(List<Puzzle> puzzles) {
-                if (puzzles == null || puzzles.isEmpty()) {
+    private List<Puzzle> cachedPuzzles = new ArrayList<>();
+
+    private void getRandomPuzzle() {
+        if (cachedPuzzles.isEmpty()) { // Nếu chưa có dữ liệu cache
+            PuzzleManager puzzleManager = new PuzzleManager();
+            puzzleManager.getPuzzlesData(new PuzzleManager.PuzzlesDataCallback() {
+                @Override
+                public void onSuccess(List<Puzzle> puzzlesList) {
+                    if (puzzlesList != null && !puzzlesList.isEmpty()) {
+                        cachedPuzzles.addAll(puzzlesList); // Cache dữ liệu
+                        showRandomPuzzleFromCache(); // Hiển thị câu đố từ cache
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Toast.makeText(getActivity(), "Lỗi khi tải câu đố. Vui lòng thử lại!", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else { // Nếu đã có dữ liệu cache
+            showRandomPuzzleFromCache(); // Hiển thị câu đố từ cache
+        }
+    }
+
+
+    private void showRandomPuzzleFromCache() {
+
+        new Thread(() -> { // Chạy trong thread riêng
+            Collections.shuffle(cachedPuzzles);
+            Puzzle randomPuzzle = cachedPuzzles.get(0);
+            getActivity().runOnUiThread(() -> { // Cập nhật UI trên main thread
+                if (puzzleDialog != null && puzzleDialog.isAdded()) {
+                    puzzleDialog.dismiss();
+                }
+
+                // Hiển thị câu đố, kết hợp logic từ showRandomPuzzleDialog
+                if (randomPuzzle == null) {
                     Toast.makeText(getActivity(), "Chưa có câu đố nào!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                Collections.shuffle(puzzles);
-                Puzzle randomPuzzle = puzzles.get(0);
-
-                PuzzleDialogFragment puzzleDialog = new PuzzleDialogFragment();
+                puzzleDialog = new PuzzleDialogFragment();
                 puzzleDialog.setCurrentPuzzle(randomPuzzle, selectedMarker);
                 puzzleDialog.show(requireActivity().getSupportFragmentManager(), "PuzzleDialogFragment");
-
-                // Lắng nghe sự kiện sau khi câu đố được giải
-                puzzleDialog.setOnDismissListener(dialog -> {
-                    if (puzzleDialog.isPuzzleSolved()) {
-                        // Cập nhật điểm số
-                        int earnedScore = randomPuzzle.getPoint();
-
-                        Toast.makeText(getActivity(), "Chúc mừng! Bạn đã thu thập được kho báu.", Toast.LENGTH_SHORT).show();
-
-                        // Gọi callback nếu có
-                        if (treasureFoundListener != null) {
-                            treasureFoundListener.onTreasureFound();
-                        }
-
-                        // Đóng fragment
-                        getParentFragmentManager().beginTransaction().remove(TreasureInfoFragment.this).commit();
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Toast.makeText(getActivity(), "Lỗi khi tải câu đố. Vui lòng thử lại!", Toast.LENGTH_SHORT).show();
-            }
-        });
+                puzzleDialog.setOnAnswerListener(this);
+//                puzzleDialog.setOnDismissListener(dialog -> {
+//                    if (puzzleDialog.isSkipped()) {
+//                        Toast.makeText(getActivity(), "Bạn đã bỏ qua câu đố.", Toast.LENGTH_SHORT).show();
+//                    } else if (puzzleDialog.isPuzzleSolved()) {
+//                        Toast.makeText(getActivity(), "Chúc mừng! Bạn đã thu thập được kho báu.", Toast.LENGTH_SHORT).show();
+//                        if (treasureFoundListener != null) {
+//                            treasureFoundListener.onTreasureFound();
+//                        }
+//                        getParentFragmentManager().beginTransaction().remove(TreasureInfoFragment.this).commit();
+//                    } else if (!puzzleDialog.isPuzzleSolved()) {
+//                        showWrongDialog();
+//                    }
+//                });
+            });
+        }).start();
     }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            // Lấy giá trị gia tốc trên 3 trục X, Y, Z
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            // Tính gia tốc tổng hợp (khoảng cách thay đổi trên ba trục)
+            float acceleration = (x * x + y * y + z * z) / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
+
+            // Kiểm tra sự lắc, nếu gia tốc lớn hơn ngưỡng 2.0 (tùy chỉnh theo nhu cầu)
+            if (acceleration > 2.0 && !isShaking) {
+                isShaking = true;  // Đánh dấu trạng thái lắc máy
+
+                if (puzzleDialog != null && puzzleDialog.isAdded()) {
+                    puzzleDialog.dismiss();
+                    puzzleDialog = null;
+                }
+                // Gọi phương thức lấy câu đố ngẫu nhiên sau khi lắc máy
+                getRandomPuzzle();
+
+                // Đặt lại trạng thái sau một khoảng thời gian ngắn (ví dụ 1 giây)
+                new Handler().postDelayed(() -> isShaking = false, 1000);  // 1000ms = 1 giây
+            }
+        }
+    }
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // Không cần xử lý
+    }
+
+
+    // Đảm bảo dừng cảm biến khi fragment không còn sử dụng
+    @Override
+    public void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    public void onAnswer(boolean isCorrect) {
+        if (!isCorrect) { // Nếu trả lời sai
+            showWrongDialog(); // Hiển thị showWrongDialog (không cần truyền currentPuzzle)
+        }
+    }
+    private void showWrongDialog() {
+        if (getContext() != null && isAdded()) {
+            // Trước khi hiển thị dialog "Thử lại", ẩn câu đố cũ (nếu có)
+            if (puzzleDialog != null && puzzleDialog.isAdded()) {
+                puzzleDialog.dismiss();  // Đóng câu đố cũ nếu đang hiển thị
+            }
+
+            // Tạo và hiển thị dialog thông báo "Vui lòng thử lại"
+            Dialog dialog = new Dialog(getContext(), R.style.TransparentDialog);
+            dialog.setContentView(R.layout.dialog_wrong_notification);
+            dialog.setCancelable(false);
+
+            Button btnTryAgain = dialog.findViewById(R.id.btn_try_again);
+
+            btnTryAgain.setOnClickListener(v -> {
+                dialog.dismiss();
+                getRandomPuzzle();
+            });
+
+            dialog.show();
+        }
+    }
+
+
 
     private void updateScoreToFirebase(int earnedScore) {
         FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();

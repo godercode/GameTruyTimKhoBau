@@ -54,6 +54,16 @@ public class PuzzleDialogFragment extends DialogFragment {
         this.onDismissListener = listener;
     }
 
+    public interface OnAnswerListener {
+        void onAnswer(boolean isCorrect);
+    }
+
+    private OnAnswerListener answerListener;
+
+    public void setOnAnswerListener(OnAnswerListener listener) {
+        this.answerListener = listener;
+    }
+
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
@@ -78,6 +88,16 @@ public class PuzzleDialogFragment extends DialogFragment {
     // Trả về trạng thái giải câu đố
     public boolean isPuzzleSolved() {
         return puzzleSolved;
+    }
+
+    private boolean isSkipped = false;
+
+    public void setSkipped(boolean skipped) {
+        this.isSkipped = skipped;
+    }
+
+    public boolean isSkipped() {
+        return isSkipped;
     }
 
     @SuppressLint("MissingInflatedId")
@@ -156,8 +176,13 @@ public class PuzzleDialogFragment extends DialogFragment {
                     int treasureId = treasure.getId();
                     String taskId;
                     Task task = findTaskByTreasureId(mTaskList, treasureId);
-                    taskId = task.getTaskId();
-                    updateStatusTask(userId, taskId);
+                    if (task != null) { // Kiểm tra task có null không
+                        taskId = task.getTaskId();
+                        updateStatusTask(userId, taskId);
+                    } else {
+                        // Xử lý trường hợp task là null, ví dụ: hiển thị thông báo lỗi
+                        Log.e("PuzzleDialogFragment", "Task not found for treasure id: " + treasureId);
+                    }
                     ///Cập nhật trạng thái cho Treasure
                     DatabaseReference treasureRef = FirebaseDatabase.getInstance().getReference("treasures")
                             .child(String.valueOf(treasureId));  // Truy cập đúng treasure bằng ID
@@ -188,18 +213,29 @@ public class PuzzleDialogFragment extends DialogFragment {
                 int earnedScore = currentPuzzle.getPoint(); // Điểm của câu hỏi
 //                closestMarker.remove();
 
+                if (answerListener != null) {
+                    answerListener.onAnswer(true); // Thông báo trả lời đúng
+                }
+                dismiss();
                 Log.d("PuzzleDialogFragment", "Calling showScoreDialog with score: " + earnedScore);
                 showScoreDialog(earnedScore);
                 dismiss();
             } else {
-                showWrongDialog();
+                if (answerListener != null) {
+                    answerListener.onAnswer(false); // Thông báo trả lời sai
+                }
                 dismiss();
             }
         });
-        btnSkip.setOnClickListener(v ->dismiss());
+        btnSkip.setOnClickListener(v -> {
+            isSkipped = true; // Đánh dấu trạng thái Skip
+            dismiss();
+        });
+
         builder.setView(view);
         return builder.create();
     }
+
 
     private void updateStatusTask(String userId, String taskId) {
         // Tham chiếu trực tiếp đến nhiệm vụ của người dùng cụ thể
@@ -297,22 +333,6 @@ public class PuzzleDialogFragment extends DialogFragment {
             }
         });
 
-    }
-
-    private void showWrongDialog() {
-        if (getContext() != null && isAdded()) {
-            Dialog dialog = new Dialog(getContext(), R.style.TransparentDialog);
-            dialog.setContentView(R.layout.dialog_wrong_notification);
-            dialog.setCancelable(false);
-
-            Button btnTryAgain = dialog.findViewById(R.id.btn_try_again);
-
-            btnTryAgain.setOnClickListener(v -> {
-                dialog.dismiss();
-            });
-
-            dialog.show();
-        }
     }
 
 
