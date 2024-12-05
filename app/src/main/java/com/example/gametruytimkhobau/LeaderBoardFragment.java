@@ -2,7 +2,6 @@ package com.example.gametruytimkhobau;
 
 import android.os.Bundle;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,6 +36,7 @@ public class LeaderBoardFragment extends Fragment implements PlayerAdapter.OnIte
     private FirebaseUser mUser;
     private RecyclerView rcvPlayer;
     private PlayerAdapter playerAdapter;
+    private ValueEventListener valueEventListener;
     private List<User> userList = new ArrayList<>();
 
     @Override
@@ -58,63 +58,44 @@ public class LeaderBoardFragment extends Fragment implements PlayerAdapter.OnIte
 
     private void getUserDataFromFirebase() {
         mReference = FirebaseDatabase.getInstance().getReference("users");
-        mReference.addValueEventListener(new ValueEventListener() {
+        valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 userList.clear();
-
-                // Lấy dữ liệu từ Firebase
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                     User user = userSnapshot.getValue(User.class);
                     if (user != null) {
-                        user.setUserId(userSnapshot.getKey()); // Gán key làm userId
+                        user.setUserId(userSnapshot.getKey());
                         userList.add(user);
-                    } else {
-                        Log.e("Leaderboard", "Invalid user data: " + userSnapshot.toString());
                     }
                 }
 
-                // Sắp xếp danh sách theo điểm số từ cao đến thấp
                 Collections.sort(userList, (u1, u2) -> Integer.compare(u2.getScore(), u1.getScore()));
-                // Cập nhật thuộc tính rank và Firebase
+
                 for (int i = 0; i < userList.size(); i++) {
                     User user = userList.get(i);
                     user.setRank(i + 1);
-
-                    // Cập nhật rank vào Firebase nếu userId không null
                     String userId = user.getUserId();
                     if (userId != null) {
-                        mReference.child(userId).child("rank").setValue(user.getRank(), (error, ref) -> {
-                            if (error == null) {
-                                Log.d("Leaderboard", "Rank updated successfully for user: " + userId);
-                            } else {
-                                Log.e("Leaderboard", "Failed to update rank", error.toException());
-                            }
-                        });
+                        mReference.child(userId).child("rank").setValue(user.getRank());
                     }
                 }
 
-                // Kiểm tra nếu Fragment còn gắn liền với Activity trước khi gọi Glide hoặc cập nhật dữ liệu cho Adapter
                 if (getActivity() != null && isAdded()) {
                     playerAdapter.setData(userList);
                     playerAdapter.notifyDataSetChanged();
-                } else {
-                    Log.e("Leaderboard", "Fragment is not attached or Activity is null.");
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Leaderboard", "Failed to read user data", error.toException());
-
-                // Kiểm tra Context trước khi gọi Toast
                 if (getActivity() != null && isAdded()) {
                     Toast.makeText(getActivity(), "Failed to fetch data: " + error.getMessage(), Toast.LENGTH_LONG).show();
-                } else {
-                    Log.e("Leaderboard", "Activity is null or Fragment is not attached, cannot show Toast");
                 }
             }
-        });
+        };
+
+        mReference.addValueEventListener(valueEventListener);
     }
 
     private void setLayout() {
@@ -162,6 +143,12 @@ public class LeaderBoardFragment extends Fragment implements PlayerAdapter.OnIte
         btnOk.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
-
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mReference != null && valueEventListener != null) {
+            mReference.removeEventListener(valueEventListener);
+        }
+    }
 }
 
