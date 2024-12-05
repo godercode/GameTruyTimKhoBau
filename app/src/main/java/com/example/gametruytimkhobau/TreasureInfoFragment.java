@@ -216,8 +216,19 @@ public class TreasureInfoFragment extends Fragment implements SensorEventListene
 
     @Override
     public void onAnswer(boolean isCorrect) {
-        if (!isCorrect) { // Nếu trả lời sai
-            showWrongDialog(); // Hiển thị showWrongDialog (không cần truyền currentPuzzle)
+        if (puzzleDialog != null && puzzleDialog.isAdded()) {
+            puzzleDialog.dismiss(); // Ẩn dialog sau khi trả lời
+        }
+
+        if (!isCorrect) {
+            showWrongDialog();
+        } else {
+            // Xử lý khi trả lời đúng
+            Toast.makeText(getActivity(), "Chúc mừng! Bạn đã thu thập được kho báu.", Toast.LENGTH_SHORT).show();
+            if (treasureFoundListener != null) {
+                treasureFoundListener.onTreasureFound();
+            }
+            getParentFragmentManager().beginTransaction().remove(TreasureInfoFragment.this).commit();
         }
     }
     private void showWrongDialog() {
