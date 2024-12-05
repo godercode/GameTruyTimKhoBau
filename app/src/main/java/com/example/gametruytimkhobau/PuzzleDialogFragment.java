@@ -156,8 +156,12 @@ public class PuzzleDialogFragment extends DialogFragment {
                     int treasureId = treasure.getId();
                     String taskId;
                     Task task = findTaskByTreasureId(mTaskList, treasureId);
-                    taskId = task.getTaskId();
-                    updateStatusTask(userId, taskId);
+                    if(task != null){
+                        taskId = task.getTaskId();
+                        updateStatusTask(userId, taskId);
+                    }else{
+                        Log.e("PuzzleDialogFragment", "Chưa lấy tassk");
+                    }
                     ///Cập nhật trạng thái cho Treasure
                     DatabaseReference treasureRef = FirebaseDatabase.getInstance().getReference("treasures")
                             .child(String.valueOf(treasureId));  // Truy cập đúng treasure bằng ID
