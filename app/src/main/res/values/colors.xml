@@ -6,8 +6,12 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
+    <color name="red">#FF0000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="purple_blue">#6200ED</color>
+    <color name="pink_custom">#FAB8CE</color>
     <color name="purple_white">#DEE0F7</color>
     <color name="grey">#F8F8F8</color>
+    <color name="brown">#8B4513</color>
+    <color name="golden_brown">#D2B48C</color>
 </resources>
